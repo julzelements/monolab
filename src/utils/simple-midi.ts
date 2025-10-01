@@ -12,6 +12,8 @@ export class SimpleMIDIManager {
   private logRealTimeMessages = false; // Option to log real-time messages
   private selectedInputId: string | null = null;
   private selectedOutputId: string | null = null;
+  private recentOutgoingMessages: Map<string, number> = new Map(); // Track recent outgoing CCs to prevent feedback
+  private lastDebugLogTime: Map<string, number> = new Map(); // Throttle debug output
 
   private constructor() {}
 
@@ -41,6 +43,19 @@ export class SimpleMIDIManager {
 
   private debugLog(category: string, message: string, data?: any) {
     if (!this.debugMode) return;
+
+    // Throttle CC messages to prevent console spam
+    if (category === "CONTROL_CHANGE") {
+      const logKey = `${category}:${message}`;
+      const now = Date.now();
+      const lastLogTime = this.lastDebugLogTime.get(logKey) || 0;
+      
+      // Only log CC messages at most once every 50ms
+      if (now - lastLogTime < 50) {
+        return;
+      }
+      this.lastDebugLogTime.set(logKey, now);
+    }
 
     const timestamp = new Date().toLocaleTimeString();
     const emoji = this.getCategoryEmoji(category);
@@ -256,6 +271,18 @@ export class SimpleMIDIManager {
       else if (ccNumber === VCF_CC.RESONANCE) parameter = "resonance";
 
       if (parameter) {
+        // Check if this is feedback from our own outgoing message
+        const messageKey = `${ccNumber}:${value}`;
+        const recentTimestamp = this.recentOutgoingMessages.get(messageKey);
+        const now = Date.now();
+        
+        if (recentTimestamp && (now - recentTimestamp) < 100) {
+          // This is likely feedback from our own message, ignore it
+          this.debugLog("CONTROL_CHANGE", `Ignoring feedback from recent outgoing CC${ccNumber} = ${value}`);
+          this.recentOutgoingMessages.delete(messageKey); // Clean up
+          return;
+        }
+
         const event: ParameterChangeEvent = {
           parameter,
           value,
@@ -419,9 +446,17 @@ export class SimpleMIDIManager {
         hex: message.map((b) => "0x" + b.toString(16).padStart(2, "0")).join(" "),
       });
 
+      // Track this outgoing message to prevent feedback loops
+      const messageKey = `${ccNumber}:${clampedValue}`;
+      this.recentOutgoingMessages.set(messageKey, Date.now());
+
       this.monologueOutput.send(message);
 
       this.debugLog("OUTGOING_MSG", `Successfully sent CC${ccNumber} = ${clampedValue}`);
+      
+      // Clean up old outgoing message tracking to prevent memory leaks
+      this.cleanupOldOutgoingMessages();
+      
       return true;
     } catch (error) {
       this.debugLog("ERROR", "Failed to send parameter change", error);
@@ -577,6 +612,34 @@ export class SimpleMIDIManager {
       if (index > -1) {
         eventListeners.splice(index, 1);
       }
+    }
+  }
+
+  private cleanupOldOutgoingMessages() {
+    const now = Date.now();
+    const expiredMessages: string[] = [];
+    const expiredDebugLogs: string[] = [];
+    
+    // Find messages older than 500ms
+    for (const [messageKey, timestamp] of this.recentOutgoingMessages.entries()) {
+      if (now - timestamp > 500) {
+        expiredMessages.push(messageKey);
+      }
+    }
+    
+    // Find debug logs older than 1 second
+    for (const [logKey, timestamp] of this.lastDebugLogTime.entries()) {
+      if (now - timestamp > 1000) {
+        expiredDebugLogs.push(logKey);
+      }
+    }
+    
+    // Remove expired messages and logs
+    for (const messageKey of expiredMessages) {
+      this.recentOutgoingMessages.delete(messageKey);
+    }
+    for (const logKey of expiredDebugLogs) {
+      this.lastDebugLogTime.delete(logKey);
     }
   }
 

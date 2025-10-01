@@ -11,8 +11,8 @@ export interface MVPPatch {
 
 // MIDI Control Change numbers for Monologue VCF
 export const VCF_CC = {
-  CUTOFF: 74,
-  RESONANCE: 71,
+  CUTOFF: 43,    // Actual CC from Monologue hardware
+  RESONANCE: 44, // Actual CC from Monologue hardware
 } as const;
 
 // Simplified MIDI device interface

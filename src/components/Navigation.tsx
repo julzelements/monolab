@@ -56,12 +56,8 @@ export function Navigation() {
       }
     };
 
-    // Initialize MIDI if not already done
-    if (!isInitialized) {
-      initializeMIDI();
-    } else {
-      updateDeviceList();
-    }
+    // Initialize MIDI once
+    initializeMIDI();
 
     // Listen for device changes
     midiManager.on("deviceChange", handleDeviceChange);
@@ -71,7 +67,7 @@ export function Navigation() {
       midiManager.off("deviceChange", handleDeviceChange);
       midiManager.off("deviceSelectionChanged", handleSelectionChange);
     };
-  }, [midiManager, isInitialized]);
+  }, []); // Run once on mount
 
   const handleInputSelection = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const deviceId = e.target.value || null;

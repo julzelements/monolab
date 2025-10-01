@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { MVPPatch, ParameterChangeEvent } from "@/types/mvp";
 import { SimpleMIDIManager } from "@/utils/simple-midi";
 
@@ -14,6 +14,14 @@ export function VCFControls({ patch, onPatchChange }: VCFControlsProps) {
   const [debugMode, setDebugMode] = useState(false);
   const [includeRealTime, setIncludeRealTime] = useState(false);
   const midiManager = SimpleMIDIManager.getInstance();
+  
+  // Use refs to avoid stale closures in event handlers
+  const patchRef = useRef(patch);
+  const onPatchChangeRef = useRef(onPatchChange);
+  
+  // Update refs when props change
+  patchRef.current = patch;
+  onPatchChangeRef.current = onPatchChange;
 
   useEffect(() => {
     // Initialize MIDI
@@ -27,10 +35,10 @@ export function VCFControls({ patch, onPatchChange }: VCFControlsProps) {
     const handleParameterChange = (event: ParameterChangeEvent) => {
       if (event.source === "hardware") {
         const updatedPatch = {
-          ...patch,
+          ...patchRef.current,
           [event.parameter]: event.value,
         };
-        onPatchChange(updatedPatch);
+        onPatchChangeRef.current(updatedPatch);
       }
     };
 
@@ -48,7 +56,7 @@ export function VCFControls({ patch, onPatchChange }: VCFControlsProps) {
       midiManager.off("deviceChange", handleDeviceChange);
       midiManager.off("monologueConnected", handleDeviceChange);
     };
-  }, [patch, onPatchChange, midiManager]);
+  }, []); // Remove dependencies that cause re-renders
 
   const handleCutoffChange = (value: number) => {
     const updatedPatch = { ...patch, cutoff: value };
