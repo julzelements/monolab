@@ -49,7 +49,7 @@ export class SimpleMIDIManager {
       const logKey = `${category}:${message}`;
       const now = Date.now();
       const lastLogTime = this.lastDebugLogTime.get(logKey) || 0;
-      
+
       // Only log CC messages at most once every 50ms
       if (now - lastLogTime < 50) {
         return;
@@ -275,8 +275,8 @@ export class SimpleMIDIManager {
         const messageKey = `${ccNumber}:${value}`;
         const recentTimestamp = this.recentOutgoingMessages.get(messageKey);
         const now = Date.now();
-        
-        if (recentTimestamp && (now - recentTimestamp) < 100) {
+
+        if (recentTimestamp && now - recentTimestamp < 100) {
           // This is likely feedback from our own message, ignore it
           this.debugLog("CONTROL_CHANGE", `Ignoring feedback from recent outgoing CC${ccNumber} = ${value}`);
           this.recentOutgoingMessages.delete(messageKey); // Clean up
@@ -453,10 +453,10 @@ export class SimpleMIDIManager {
       this.monologueOutput.send(message);
 
       this.debugLog("OUTGOING_MSG", `Successfully sent CC${ccNumber} = ${clampedValue}`);
-      
+
       // Clean up old outgoing message tracking to prevent memory leaks
       this.cleanupOldOutgoingMessages();
-      
+
       return true;
     } catch (error) {
       this.debugLog("ERROR", "Failed to send parameter change", error);
@@ -619,21 +619,21 @@ export class SimpleMIDIManager {
     const now = Date.now();
     const expiredMessages: string[] = [];
     const expiredDebugLogs: string[] = [];
-    
+
     // Find messages older than 500ms
     for (const [messageKey, timestamp] of this.recentOutgoingMessages.entries()) {
       if (now - timestamp > 500) {
         expiredMessages.push(messageKey);
       }
     }
-    
+
     // Find debug logs older than 1 second
     for (const [logKey, timestamp] of this.lastDebugLogTime.entries()) {
       if (now - timestamp > 1000) {
         expiredDebugLogs.push(logKey);
       }
     }
-    
+
     // Remove expired messages and logs
     for (const messageKey of expiredMessages) {
       this.recentOutgoingMessages.delete(messageKey);

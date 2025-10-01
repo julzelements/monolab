@@ -14,11 +14,11 @@ export function VCFControls({ patch, onPatchChange }: VCFControlsProps) {
   const [debugMode, setDebugMode] = useState(false);
   const [includeRealTime, setIncludeRealTime] = useState(false);
   const midiManager = SimpleMIDIManager.getInstance();
-  
+
   // Use refs to avoid stale closures in event handlers
   const patchRef = useRef(patch);
   const onPatchChangeRef = useRef(onPatchChange);
-  
+
   // Update refs when props change
   patchRef.current = patch;
   onPatchChangeRef.current = onPatchChange;
