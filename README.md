@@ -15,16 +15,19 @@ A simplified MVP version of Monolab focusing on real-time VCF (filter) control f
 ### Option 1: Local Development (No Docker)
 
 1. **Install dependencies**:
+
    ```bash
    npm install
    ```
 
 2. **Set up environment**:
+
    ```bash
    cp .env.example .env.local
    ```
 
 3. **Start the development server**:
+
    ```bash
    npm run dev
    ```
@@ -34,6 +37,7 @@ A simplified MVP version of Monolab focusing on real-time VCF (filter) control f
 ### Option 2: Docker Development
 
 1. **Start the development environment**:
+
    ```bash
    npm run docker:dev
    ```
@@ -54,6 +58,7 @@ A simplified MVP version of Monolab focusing on real-time VCF (filter) control f
 ## 🛠️ Development
 
 ### Project Structure (MVP)
+
 ```
 src/
 ├── app/                    # Next.js app directory
@@ -77,6 +82,7 @@ The MVP uses the Web MIDI API to communicate with the Monologue:
 ### Next Steps
 
 After the MVP is working, the next iterations will add:
+
 - More parameters (VCO, EG, LFO, etc.)
 - Patch save/load functionality
 - Patch sharing via URLs

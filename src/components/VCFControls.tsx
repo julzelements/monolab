@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { MVPPatch, ParameterChangeEvent } from "@/types/mvp";
 import { SimpleMIDIManager } from "@/utils/simple-midi";
+import { Knob } from "./ui/knob";
 
 interface VCFControlsProps {
   patch: MVPPatch;
@@ -150,42 +151,28 @@ export function VCFControls({ patch, onPatchChange }: VCFControlsProps) {
         </div>
       )}
 
-      <div className="space-y-6">
+      <div className="flex justify-center items-center space-x-12">
         {/* Cutoff Control */}
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <label className="text-sm font-medium">Cutoff</label>
-            <span className="text-sm text-muted-foreground">{patch.cutoff}</span>
-          </div>
-          <div className="relative">
-            <input
-              type="range"
-              min="0"
-              max="127"
-              value={patch.cutoff}
-              onChange={(e) => handleCutoffChange(parseInt(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-            />
-          </div>
-        </div>
+        <Knob
+          value={patch.cutoff}
+          min={0}
+          max={127}
+          onChange={handleCutoffChange}
+          label="Cutoff"
+          size={100}
+          className="flex-shrink-0"
+        />
 
         {/* Resonance Control */}
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <label className="text-sm font-medium">Resonance</label>
-            <span className="text-sm text-muted-foreground">{patch.resonance}</span>
-          </div>
-          <div className="relative">
-            <input
-              type="range"
-              min="0"
-              max="127"
-              value={patch.resonance}
-              onChange={(e) => handleResonanceChange(parseInt(e.target.value))}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider"
-            />
-          </div>
-        </div>
+        <Knob
+          value={patch.resonance}
+          min={0}
+          max={127}
+          onChange={handleResonanceChange}
+          label="Resonance"
+          size={100}
+          className="flex-shrink-0"
+        />
       </div>
 
       {/* Patch Info */}

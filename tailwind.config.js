@@ -1,12 +1,7 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   darkMode: ["class"],
-  content: [
-    './pages/**/*.{ts,tsx}',
-    './components/**/*.{ts,tsx}',
-    './app/**/*.{ts,tsx}',
-    './src/**/*.{ts,tsx}',
-  ],
+  content: ["./pages/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./app/**/*.{ts,tsx}", "./src/**/*.{ts,tsx}"],
   prefix: "",
   theme: {
     container: {
@@ -54,10 +49,10 @@ module.exports = {
         // Monologue-themed colors
         monologue: {
           orange: "#ff6b35",
-          blue: "#004e89", 
+          blue: "#004e89",
           gray: "#1a2332",
-          silver: "#c0c5ce"
-        }
+          silver: "#c0c5ce",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -81,4 +76,4 @@ module.exports = {
     },
   },
   plugins: [require("tailwindcss-animate")],
-}
+};
