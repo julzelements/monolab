@@ -24,7 +24,7 @@ export function Knob({ value, min = 0, max = 127, onChange, size = 80, label, cl
       const normalizedValue = (val - min) / (max - min);
       // Adjust by -30° to align properly: start at 210°, sweep 300° total
       let angle = 210 + normalizedValue * 300;
-      
+
       // Handle wraparound: normalize angle to 0-360 range
       while (angle >= 360) {
         angle -= 360;
@@ -32,7 +32,7 @@ export function Knob({ value, min = 0, max = 127, onChange, size = 80, label, cl
       while (angle < 0) {
         angle += 360;
       }
-      
+
       return angle;
     },
     [min, max]
