@@ -393,7 +393,18 @@ export function decodeMonologueParameters(rawSysexData: number[]): MonologuePara
         },
       ],
       // Step Event Data (bytes 96-447, 22 bytes per step × 16 steps)
-      stepEvents: [],
+      stepEvents: [] as Array<{
+        noteNumber: number;
+        velocity: number;
+        gateTime: number;
+        triggerSwitch: boolean;
+        motionData: Array<{
+          data1: number;
+          data2: number;
+          data3: number;
+          data4: number;
+        }>;
+      }>,
     };
 
     // Extract Step Event Data for all 16 steps
