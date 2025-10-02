@@ -14,6 +14,9 @@ export class SimpleMIDIManager {
   private selectedOutputId: string | null = null;
   private recentOutgoingMessages: Map<string, number> = new Map(); // Track recent outgoing CCs to prevent feedback
   private lastDebugLogTime: Map<string, number> = new Map(); // Throttle debug output
+  
+  // Simple storage for raw SysEx dumps
+  private lastSysExDump: number[] | null = null;
 
   private constructor() {}
 
@@ -96,11 +99,13 @@ export class SimpleMIDIManager {
         return false;
       }
 
-      this.debugLog("MIDI_INIT", "Requesting MIDI access...");
-      this.midiAccess = await navigator.requestMIDIAccess();
+      this.debugLog("MIDI_INIT", "Requesting MIDI access with SysEx support...");
+      console.log("🔓 Requesting Web MIDI access with SysEx enabled...");
+      this.midiAccess = await navigator.requestMIDIAccess({ sysex: true });
       this.isInitialized = true;
 
-      this.debugLog("MIDI_INIT", "MIDI access granted successfully");
+      this.debugLog("MIDI_INIT", "MIDI access granted successfully with SysEx support");
+      console.log("✅ Web MIDI access granted with SysEx support!");
       this.debugLog(
         "MIDI_INIT",
         `Found ${this.midiAccess.inputs.size} input(s) and ${this.midiAccess.outputs.size} output(s)`
@@ -306,10 +311,37 @@ export class SimpleMIDIManager {
     }
     // Check for SysEx messages (0xF0)
     else if (status === 0xf0) {
-      this.debugLog("SYSEX", "SysEx message received", {
-        length: message.data.length,
-        data: Array.from(message.data),
-      });
+      const data: number[] = Array.from(message.data);
+      
+      console.log("🎹 SysEx message detected!");
+      console.log("📊 Raw analysis:");
+      console.log("   Length:", data.length, "bytes");
+      console.log("   Full hex:", data.map(b => "0x" + b.toString(16).padStart(2, "0")).join(" "));
+      console.log("   First 10 bytes:", data.slice(0, 10).map(b => "0x" + b.toString(16).padStart(2, "0")).join(" "));
+      if (data.length > 10) {
+        console.log("   Last 5 bytes:", data.slice(-5).map(b => "0x" + b.toString(16).padStart(2, "0")).join(" "));
+      }
+      
+      // Analyze the header to understand what we're getting
+      console.log("🔍 Header analysis:");
+      if (data.length >= 2) {
+        console.log("   Byte 1 (Manufacturer):", "0x" + data[1].toString(16).padStart(2, "0"), 
+                   data[1] === 0x42 ? "(Korg ✓)" : "(Not Korg)");
+      }
+      if (data.length >= 3) {
+        console.log("   Byte 2 (Device ID):", "0x" + data[2].toString(16).padStart(2, "0"));
+      }
+      if (data.length >= 6) {
+        console.log("   Bytes 3-5:", data.slice(3, 6).map(b => "0x" + b.toString(16).padStart(2, "0")).join(" "));
+      }
+      if (data.length >= 7) {
+        console.log("   Byte 6 (Function):", "0x" + data[6].toString(16).padStart(2, "0"));
+      }
+      
+      // Store ANY SysEx message for analysis
+      console.log("📁 Storing this SysEx for analysis...");
+      this.lastSysExDump = data;
+      console.log("✅ Stored SysEx dump");
     }
     // Check for real-time messages (but don't spam the console)
     else if (isRealTimeMessage) {
@@ -657,5 +689,29 @@ export class SimpleMIDIManager {
     this.monologueInput = null;
     this.monologueOutput = null;
     this.listeners.clear();
+  }
+
+  // Get the last stored SysEx dump
+  getLastSysExDump(): number[] | null {
+    return this.lastSysExDump;
+  }
+
+  // Clear stored dump
+  clearSysExDump(): void {
+    this.lastSysExDump = null;
+    console.log("🗑️ Cleared stored SysEx dump");
+  }
+
+  // Simple SysEx dump request for testing
+  requestSysExDump() {
+    console.log("� SysEx analysis mode activated!");
+    console.log("📋 Ready to capture and analyze ANY SysEx from your Monologue");
+    console.log("🎹 Try these on your Monologue:");
+    console.log("   • Manual SysEx dump (check manual for key combo)");
+    console.log("   • Program change operations");
+    console.log("   • Any other SysEx-triggering functions");
+    console.log("📊 All SysEx messages will be captured and analyzed in detail");
+    
+    return true; // We're ready to analyze
   }
 }

@@ -180,6 +180,29 @@ export function VCFControls({ patch, onPatchChange }: VCFControlsProps) {
         <h3 className="text-lg font-medium mb-2">Current Patch</h3>
         <p className="text-muted-foreground">{patch.name}</p>
       </div>
+
+      {/* SysEx Test */}
+      <div className="pt-4 border-t">
+        <h3 className="text-lg font-medium mb-2">SysEx Analysis</h3>
+        <button
+          onClick={() => {
+            console.log("🔍 SysEx analysis mode active - any SysEx will be captured and analyzed");
+            midiManager.requestSysExDump();
+          }}
+          disabled={!isConnected}
+          className="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-sm"
+        >
+          Analyze Any SysEx
+        </button>
+        {!isConnected && (
+          <p className="text-sm text-gray-500 mt-2">
+            Connect a Monologue to analyze SysEx messages
+          </p>
+        )}
+        <p className="text-xs text-gray-600 mt-2">
+          Will capture and analyze ANY SysEx message from the Monologue to understand the format.
+        </p>
+      </div>
     </div>
   );
 }
