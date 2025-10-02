@@ -54,7 +54,8 @@ function to7BitMidiValue(value10bit: number): number {
 function from7BitMidiValue(valueMidi: number): number {
   // Scale from 0-127 to 0-1023
   return Math.round((valueMidi / 127) * 1023);
-}/**
+}
+/**
  * Decode Monologue SysEx and extract parameters
  */
 export function decodeMonologueParameters(rawSysexData: number[]): MonologueParameters {
