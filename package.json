@@ -12,7 +12,8 @@
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
     "docker:dev": "docker-compose up -d",
-    "docker:down": "docker-compose down"
+    "docker:down": "docker-compose down",
+    "test:sysex": "tsx src/lib/sysex/test-runner.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.2",
@@ -32,7 +33,7 @@
     "react-hook-form": "^7.48.2",
     "tailwind-merge": "^2.2.0",
     "tailwindcss-animate": "^1.0.7",
-    "webmidi": "^3.1.8",
+    "webmidi": "^3.1.13",
     "zod": "^3.22.4",
     "zustand": "^4.4.7"
   },

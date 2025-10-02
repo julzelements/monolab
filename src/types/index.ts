@@ -148,8 +148,8 @@ export interface MIDIDevice {
   id: string;
   name: string;
   manufacturer: string;
-  input?: WebMidi.MIDIInput;
-  output?: WebMidi.MIDIOutput;
+  input?: any; // Will be WebMidi Input when we migrate
+  output?: any; // Will be WebMidi Output when we migrate
   isConnected: boolean;
 }
 

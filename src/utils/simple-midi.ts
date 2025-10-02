@@ -1,5 +1,6 @@
 // MVP MIDI utilities - simplified for cutoff and resonance only
 import { MVPPatch, SimpleMIDIDevice, ParameterChangeEvent, VCF_CC, DeviceSelection } from "@/types/mvp";
+import { decodeMonologueParameters } from "@/lib/sysex";
 
 export class SimpleMIDIManager {
   private static instance: SimpleMIDIManager;
@@ -342,6 +343,43 @@ export class SimpleMIDIManager {
       console.log("📁 Storing this SysEx for analysis...");
       this.lastSysExDump = data;
       console.log("✅ Stored SysEx dump");
+      
+      // Try to parse if it looks like a Monologue dump
+      if (data.length === 520 && data[1] === 0x42 && data[6] === 0x40) {
+        console.log("🧪 Attempting to parse as Monologue Current Program Data Dump...");
+        
+        // Parse with new SysEx library
+        console.log("🔬 Using new SysEx decoder...");
+        const newParsed = decodeMonologueParameters(data);
+        console.log("📊 Parser result:", newParsed);
+        
+        // Emit parameter change events if we got valid data
+        if (newParsed.isValid && newParsed.vcf) {
+          console.log("🎛️ Emitting VCF parameter updates from SysEx...");
+          
+          // Emit cutoff change
+          this.emit('parameterChange', {
+            parameterId: 'cutoff',
+            value: newParsed.vcf.cutoff,
+            normalized: newParsed.vcf.cutoff / 1023,
+            ccValue: Math.round((newParsed.vcf.cutoff / 1023) * 127),
+            source: 'sysex',
+            timestamp: Date.now()
+          });
+          
+          // Emit resonance change
+          this.emit('parameterChange', {
+            parameterId: 'resonance',
+            value: newParsed.vcf.resonance,
+            normalized: newParsed.vcf.resonance / 1023,
+            ccValue: Math.round((newParsed.vcf.resonance / 1023) * 127),
+            source: 'sysex',
+            timestamp: Date.now()
+          });
+          
+          console.log(`✅ Updated VCF: Cutoff=${newParsed.vcf.cutoff}/1023, Resonance=${newParsed.vcf.resonance}/1023`);
+        }
+      }
     }
     // Check for real-time messages (but don't spam the console)
     else if (isRealTimeMessage) {
@@ -700,6 +738,30 @@ export class SimpleMIDIManager {
   clearSysExDump(): void {
     this.lastSysExDump = null;
     console.log("🗑️ Cleared stored SysEx dump");
+  }
+
+  // Export captured dump for saving to scratch folder
+  exportSysExDump(): string | null {
+    if (!this.lastSysExDump) {
+      console.log("❌ No SysEx dump to export");
+      return null;
+    }
+
+    const timestamp = new Date().toISOString();
+    const exportData = {
+      timestamp,
+      type: "hardware_capture",
+      length: this.lastSysExDump.length,
+      rawData: this.lastSysExDump,
+      rawHex: this.lastSysExDump.map(b => "0x" + b.toString(16).padStart(2, "0")).join(" "),
+      notes: "Captured from real Monologue hardware"
+    };
+
+    console.log("📄 SysEx dump export data:");
+    console.log("Copy this JSON to save to scratch folder:");
+    console.log(JSON.stringify(exportData, null, 2));
+    
+    return JSON.stringify(exportData, null, 2);
   }
 
   // Simple SysEx dump request for testing
