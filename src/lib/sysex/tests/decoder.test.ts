@@ -1,11 +1,5 @@
 import { describe, it, expect } from "vitest";
-import {
-  decodeMonologueParameters,
-  decodeMonologueVCFParameters,
-  getVCFMidiValues,
-  to7BitMidiValue,
-  from7BitMidiValue,
-} from "../decoder";
+import { decodeMonologueParameters, getVCFMidiValues, to7BitMidiValue, from7BitMidiValue } from "../decoder";
 import fs from "fs";
 import path from "path";
 
@@ -94,20 +88,6 @@ describe("Monologue Decoder", () => {
         expect(result.lfo).toBeDefined();
         expect(result.misc).toBeDefined();
       }
-    });
-  });
-
-  describe("decodeMonologueVCFParameters (legacy)", () => {
-    it("should return VCF-only parameters for backward compatibility", () => {
-      const dumpPath = path.join(__dirname, "data", "dumps", "dump1.json");
-      const dump = JSON.parse(fs.readFileSync(dumpPath, "utf8"));
-
-      const result = decodeMonologueVCFParameters(dump.rawData);
-
-      expect(result.isValid).toBe(true);
-      expect(result.patchName).toBe("<afx acid3>");
-      expect(result.vcf?.cutoff).toBe(488);
-      expect(result.vcf?.resonance).toBe(909);
     });
   });
 

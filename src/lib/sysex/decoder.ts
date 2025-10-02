@@ -218,39 +218,3 @@ export function getVCFMidiValues(params: MonologueParameters): { cutoff: number;
     resonance: to7BitMidiValue(params.filter.resonance),
   };
 }
-
-/**
- * Simplified interface for backward compatibility with existing VCF-only code
- */
-export interface LegacyMonologueParameters {
-  isValid: boolean;
-  patchName?: string;
-  error?: string;
-  vcf?: {
-    cutoff: number;
-    resonance: number;
-  };
-}
-
-/**
- * Legacy function that returns only VCF parameters for backward compatibility
- */
-export function decodeMonologueVCFParameters(rawSysexData: number[]): LegacyMonologueParameters {
-  const fullParams = decodeMonologueParameters(rawSysexData);
-
-  if (!fullParams.isValid || !fullParams.filter) {
-    return {
-      isValid: false,
-      error: fullParams.error,
-    };
-  }
-
-  return {
-    isValid: true,
-    patchName: fullParams.patchName,
-    vcf: {
-      cutoff: fullParams.filter.cutoff,
-      resonance: fullParams.filter.resonance,
-    },
-  };
-}

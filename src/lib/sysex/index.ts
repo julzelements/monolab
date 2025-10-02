@@ -17,12 +17,10 @@ export {
 // Parameter extraction and conversion
 export {
   decodeMonologueParameters,
-  decodeMonologueVCFParameters,
   getVCFMidiValues,
   to7BitMidiValue,
   from7BitMidiValue,
   type MonologueParameters,
-  type LegacyMonologueParameters,
 } from "./decoder";
 
 // New Monologue parser (converted from example)
