@@ -15,7 +15,7 @@ export class SimpleMIDIManager {
   private selectedOutputId: string | null = null;
   private recentOutgoingMessages: Map<string, number> = new Map(); // Track recent outgoing CCs to prevent feedback
   private lastDebugLogTime: Map<string, number> = new Map(); // Throttle debug output
-  
+
   // Simple storage for raw SysEx dumps
   private lastSysExDump: number[] | null = null;
 
@@ -313,70 +313,91 @@ export class SimpleMIDIManager {
     // Check for SysEx messages (0xF0)
     else if (status === 0xf0) {
       const data: number[] = Array.from(message.data);
-      
+
       console.log("🎹 SysEx message detected!");
       console.log("📊 Raw analysis:");
       console.log("   Length:", data.length, "bytes");
-      console.log("   Full hex:", data.map(b => "0x" + b.toString(16).padStart(2, "0")).join(" "));
-      console.log("   First 10 bytes:", data.slice(0, 10).map(b => "0x" + b.toString(16).padStart(2, "0")).join(" "));
+      console.log("   Full hex:", data.map((b) => "0x" + b.toString(16).padStart(2, "0")).join(" "));
+      console.log(
+        "   First 10 bytes:",
+        data
+          .slice(0, 10)
+          .map((b) => "0x" + b.toString(16).padStart(2, "0"))
+          .join(" ")
+      );
       if (data.length > 10) {
-        console.log("   Last 5 bytes:", data.slice(-5).map(b => "0x" + b.toString(16).padStart(2, "0")).join(" "));
+        console.log(
+          "   Last 5 bytes:",
+          data
+            .slice(-5)
+            .map((b) => "0x" + b.toString(16).padStart(2, "0"))
+            .join(" ")
+        );
       }
-      
+
       // Analyze the header to understand what we're getting
       console.log("🔍 Header analysis:");
       if (data.length >= 2) {
-        console.log("   Byte 1 (Manufacturer):", "0x" + data[1].toString(16).padStart(2, "0"), 
-                   data[1] === 0x42 ? "(Korg ✓)" : "(Not Korg)");
+        console.log(
+          "   Byte 1 (Manufacturer):",
+          "0x" + data[1].toString(16).padStart(2, "0"),
+          data[1] === 0x42 ? "(Korg ✓)" : "(Not Korg)"
+        );
       }
       if (data.length >= 3) {
         console.log("   Byte 2 (Device ID):", "0x" + data[2].toString(16).padStart(2, "0"));
       }
       if (data.length >= 6) {
-        console.log("   Bytes 3-5:", data.slice(3, 6).map(b => "0x" + b.toString(16).padStart(2, "0")).join(" "));
+        console.log(
+          "   Bytes 3-5:",
+          data
+            .slice(3, 6)
+            .map((b) => "0x" + b.toString(16).padStart(2, "0"))
+            .join(" ")
+        );
       }
       if (data.length >= 7) {
         console.log("   Byte 6 (Function):", "0x" + data[6].toString(16).padStart(2, "0"));
       }
-      
+
       // Store ANY SysEx message for analysis
       console.log("📁 Storing this SysEx for analysis...");
       this.lastSysExDump = data;
       console.log("✅ Stored SysEx dump");
-      
+
       // Try to parse if it looks like a Monologue dump
       if (data.length === 520 && data[1] === 0x42 && data[6] === 0x40) {
         console.log("🧪 Attempting to parse as Monologue Current Program Data Dump...");
-        
+
         // Parse with new SysEx library
         console.log("🔬 Using new SysEx decoder...");
         const newParsed = decodeMonologueParameters(data);
         console.log("📊 Parser result:", newParsed);
-        
+
         // Emit parameter change events if we got valid data
         if (newParsed.isValid && newParsed.vcf) {
           console.log("🎛️ Emitting VCF parameter updates from SysEx...");
-          
+
           // Emit cutoff change
-          this.emit('parameterChange', {
-            parameterId: 'cutoff',
+          this.emit("parameterChange", {
+            parameterId: "cutoff",
             value: newParsed.vcf.cutoff,
             normalized: newParsed.vcf.cutoff / 1023,
             ccValue: Math.round((newParsed.vcf.cutoff / 1023) * 127),
-            source: 'sysex',
-            timestamp: Date.now()
+            source: "sysex",
+            timestamp: Date.now(),
           });
-          
+
           // Emit resonance change
-          this.emit('parameterChange', {
-            parameterId: 'resonance',
+          this.emit("parameterChange", {
+            parameterId: "resonance",
             value: newParsed.vcf.resonance,
             normalized: newParsed.vcf.resonance / 1023,
             ccValue: Math.round((newParsed.vcf.resonance / 1023) * 127),
-            source: 'sysex',
-            timestamp: Date.now()
+            source: "sysex",
+            timestamp: Date.now(),
           });
-          
+
           console.log(`✅ Updated VCF: Cutoff=${newParsed.vcf.cutoff}/1023, Resonance=${newParsed.vcf.resonance}/1023`);
         }
       }
@@ -753,14 +774,14 @@ export class SimpleMIDIManager {
       type: "hardware_capture",
       length: this.lastSysExDump.length,
       rawData: this.lastSysExDump,
-      rawHex: this.lastSysExDump.map(b => "0x" + b.toString(16).padStart(2, "0")).join(" "),
-      notes: "Captured from real Monologue hardware"
+      rawHex: this.lastSysExDump.map((b) => "0x" + b.toString(16).padStart(2, "0")).join(" "),
+      notes: "Captured from real Monologue hardware",
     };
 
     console.log("📄 SysEx dump export data:");
     console.log("Copy this JSON to save to scratch folder:");
     console.log(JSON.stringify(exportData, null, 2));
-    
+
     return JSON.stringify(exportData, null, 2);
   }
 
@@ -773,7 +794,7 @@ export class SimpleMIDIManager {
     console.log("   • Program change operations");
     console.log("   • Any other SysEx-triggering functions");
     console.log("📊 All SysEx messages will be captured and analyzed in detail");
-    
+
     return true; // We're ready to analyze
   }
 }

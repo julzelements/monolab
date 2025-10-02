@@ -1,6 +1,6 @@
 /**
  * Korg Monologue SysEx Library
- * 
+ *
  * Comprehensive encoder/decoder for Korg Monologue SysEx data
  */
 
@@ -11,8 +11,8 @@ export {
   is7BitSafe,
   is8BitSafe,
   type DecodedSysExData,
-  type EncodedSysExData
-} from './encoder';
+  type EncodedSysExData,
+} from "./encoder";
 
 // Parameter extraction and conversion
 export {
@@ -20,11 +20,8 @@ export {
   getVCFMidiValues,
   to7BitMidiValue,
   from7BitMidiValue,
-  type MonologueParameters
-} from './decoder';
+  type MonologueParameters,
+} from "./decoder";
 
 // Testing utilities
-export {
-  runEncoderTests,
-  testWithRealData
-} from './encoder.test';
+export { runEncoderTests, testWithRealData } from "./encoder.test";
