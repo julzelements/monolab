@@ -41,6 +41,25 @@ export interface MonologueParameters {
 }
 
 /**
+ * Add lower bits to create 10-bit parameter values (like the example parser)
+ * This combines an 8-bit high value with lower bits from a packed byte
+ */
+function addLowerBits(upperByte: number, lowerBitsSource: number, bitOffset: number): number {
+  // Convert to binary strings
+  const upperBits = upperByte.toString(2).padStart(8, '0');
+  const lowerBitsString = lowerBitsSource.toString(2).padStart(8, '0');
+  
+  // Extract the specific bits we need from the lower bits source
+  const startPos = 8 - bitOffset - 2; // Position to start extracting 2 bits
+  const endPos = 8 - bitOffset; // Position to end extracting
+  const lowerBits = lowerBitsString.slice(startPos, endPos);
+  
+  // Combine to create 10-bit value
+  const tenBitString = upperBits + lowerBits;
+  return parseInt(tenBitString, 2);
+}
+
+/**
  * Convert 10-bit internal value (0-1023) to MIDI CC value (0-127)
  */
 function to7BitMidiValue(value10bit: number): number {
@@ -108,22 +127,23 @@ export function decodeMonologueParameters(rawSysexData: number[]): MonologuePara
   }
   patchName = patchName.trimEnd(); // Remove trailing spaces
 
-  // Extract VCF parameters based on real hardware analysis
+  // Extract VCF parameters using the same method as example parser
+  // Working with original 7-bit MIDI data, not decoded 8-bit data
+  const midiData = rawSysexData.slice(7, -1); // Remove header and terminator
+  
   let cutoff10bit = 0;
   let resonance10bit = 0;
-
-  // Resonance at offset 30-31 (little-endian 10-bit)
-  if (decoded.data.length > 31) {
-    const resLow = decoded.data[30];
-    const resHigh = decoded.data[31];
-    resonance10bit = ((resHigh << 8) | resLow) & 0x3ff; // Mask to 10 bits
-  }
-
-  // Cutoff at offset 200-201 (big-endian 10-bit)
-  if (decoded.data.length > 201) {
-    const cutHigh = decoded.data[200];
-    const cutLow = decoded.data[201];
-    cutoff10bit = ((cutHigh << 8) | cutLow) & 0x3ff; // Mask to 10 bits
+  
+  try {
+    // Extract parameters using same offsets as example parser
+    // Cutoff: addLowerBits(data[22], data[33], 4)
+    // Resonance: addLowerBits(data[23], data[33], 6)
+    if (midiData.length > 33) {
+      cutoff10bit = addLowerBits(midiData[22], midiData[33], 4);
+      resonance10bit = addLowerBits(midiData[23], midiData[33], 6);
+    }
+  } catch (error) {
+    console.warn("Failed to extract VCF parameters:", error);
   }
 
   console.log(`🎛️ VCF Parameters:`);

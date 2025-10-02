@@ -1,6 +1,6 @@
 // MVP MIDI utilities - simplified for cutoff and resonance only
 import { MVPPatch, SimpleMIDIDevice, ParameterChangeEvent, VCF_CC, DeviceSelection } from "@/types/mvp";
-import { decodeMonologueParameters } from "@/lib/sysex";
+import { parseMonologueSysEx } from "@/lib/sysex";
 
 export class SimpleMIDIManager {
   private static instance: SimpleMIDIManager;
@@ -369,9 +369,9 @@ export class SimpleMIDIManager {
       if (data.length === 520 && data[1] === 0x42 && data[6] === 0x40) {
         console.log("🧪 Attempting to parse as Monologue Current Program Data Dump...");
 
-        // Parse with new SysEx library
-        console.log("🔬 Using new SysEx decoder...");
-        const newParsed = decodeMonologueParameters(data);
+        // Parse with new SysEx library (converted from example parser)
+        console.log("🔬 Using TypeScript Monologue parser...");
+        const newParsed = parseMonologueSysEx(data);
         console.log("📊 Parser result:", newParsed);
 
         // Emit parameter change events if we got valid data
