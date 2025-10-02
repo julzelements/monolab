@@ -46,14 +46,14 @@ export interface MonologueParameters {
  */
 function addLowerBits(upperByte: number, lowerBitsSource: number, bitOffset: number): number {
   // Convert to binary strings
-  const upperBits = upperByte.toString(2).padStart(8, '0');
-  const lowerBitsString = lowerBitsSource.toString(2).padStart(8, '0');
-  
+  const upperBits = upperByte.toString(2).padStart(8, "0");
+  const lowerBitsString = lowerBitsSource.toString(2).padStart(8, "0");
+
   // Extract the specific bits we need from the lower bits source
   const startPos = 8 - bitOffset - 2; // Position to start extracting 2 bits
   const endPos = 8 - bitOffset; // Position to end extracting
   const lowerBits = lowerBitsString.slice(startPos, endPos);
-  
+
   // Combine to create 10-bit value
   const tenBitString = upperBits + lowerBits;
   return parseInt(tenBitString, 2);
@@ -130,10 +130,10 @@ export function decodeMonologueParameters(rawSysexData: number[]): MonologuePara
   // Extract VCF parameters using the same method as example parser
   // Working with original 7-bit MIDI data, not decoded 8-bit data
   const midiData = rawSysexData.slice(7, -1); // Remove header and terminator
-  
+
   let cutoff10bit = 0;
   let resonance10bit = 0;
-  
+
   try {
     // Extract parameters using same offsets as example parser
     // Cutoff: addLowerBits(data[22], data[33], 4)

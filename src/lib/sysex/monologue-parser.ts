@@ -3,7 +3,7 @@
  * Focuses on VCF parameters and patch name for our MVP
  */
 
-import { addLowerBits, getBits, transformDataFrom7BitTo8Bit } from './utilities';
+import { addLowerBits, getBits, transformDataFrom7BitTo8Bit } from "./utilities";
 
 export interface MonologueVCFParams {
   isValid: boolean;
@@ -25,17 +25,17 @@ export function parseMonologueSysEx(rawSysexData: number[]): MonologueVCFParams 
     if (rawSysexData.length !== 520) {
       return {
         isValid: false,
-        error: `Invalid SysEx length: ${rawSysexData.length}, expected 520`
+        error: `Invalid SysEx length: ${rawSysexData.length}, expected 520`,
       };
     }
 
     // Validate header
-    const expectedHeader = [0xF0, 0x42, 0x30, 0x00, 0x01, 0x44, 0x40];
+    const expectedHeader = [0xf0, 0x42, 0x30, 0x00, 0x01, 0x44, 0x40];
     for (let i = 0; i < expectedHeader.length; i++) {
       if (rawSysexData[i] !== expectedHeader[i]) {
         return {
           isValid: false,
-          error: `Invalid header at byte ${i}`
+          error: `Invalid header at byte ${i}`,
         };
       }
     }
@@ -44,17 +44,18 @@ export function parseMonologueSysEx(rawSysexData: number[]): MonologueVCFParams 
     const data = transformDataFrom7BitTo8Bit(rawSysexData);
 
     // Extract patch name (first 12 bytes)
-    const patchName = data.slice(4, 16)
-      .map(x => String.fromCharCode(x))
-      .join('')
-      .replace(/\0/g, '') // Remove null terminators
+    const patchName = data
+      .slice(4, 16)
+      .map((x) => String.fromCharCode(x))
+      .join("")
+      .replace(/\0/g, "") // Remove null terminators
       .trim();
 
     // Extract VCF parameters using exact same logic as example parser
-    // Filter creation from example: 
+    // Filter creation from example:
     // new Filter(new Knob('Cutoff', addLowerBits(data[22], data[33], 4)),
     //            new Knob('Resonance', addLowerBits(data[23], data[33], 6)));
-    
+
     const cutoff = addLowerBits(data[22], data[33], 4);
     const resonance = addLowerBits(data[23], data[33], 6);
 
@@ -63,14 +64,13 @@ export function parseMonologueSysEx(rawSysexData: number[]): MonologueVCFParams 
       patchName,
       vcf: {
         cutoff,
-        resonance
-      }
+        resonance,
+      },
     };
-
   } catch (error) {
     return {
       isValid: false,
-      error: `Parse error: ${error instanceof Error ? error.message : String(error)}`
+      error: `Parse error: ${error instanceof Error ? error.message : String(error)}`,
     };
   }
 }

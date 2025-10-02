@@ -24,17 +24,10 @@ export {
 } from "./decoder";
 
 // New Monologue parser (converted from example)
-export {
-  parseMonologueSysEx,
-  type MonologueVCFParams,
-} from "./monologue-parser";
+export { parseMonologueSysEx, type MonologueVCFParams } from "./monologue-parser";
 
 // Utilities
-export {
-  addLowerBits,
-  getBits,
-  transformDataFrom7BitTo8Bit,
-} from "./utilities";
+export { addLowerBits, getBits, transformDataFrom7BitTo8Bit } from "./utilities";
 
 // Testing utilities
 export { runEncoderTests, testWithRealData } from "./encoder.test";
