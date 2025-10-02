@@ -11,6 +11,7 @@ This folder contains reference materials for the Monolab project.
 ## Recommended Files
 
 Please add the following when available:
+
 - `korg-monologue-midi-spec.pdf` - Official Korg MIDI implementation chart
 - `korg-monologue-manual.pdf` - User manual with SysEx information
 - `development-notes.md` - Our findings and test results

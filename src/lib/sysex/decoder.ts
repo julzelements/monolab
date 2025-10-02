@@ -1,8 +1,16 @@
 /**
- * Korg Monologue Parameter Decoder
+ * Korg Monologue Comprehensive Parameter Decoder
  *
- * Complete implementation based on the working JavaScript example parser
- * Extracts all parameters from SysEx data according to the Korg Monologue MIDI Implementation Chart
+ * Complete implementation supporting all parameters from the official MIDI specification.
+ * Extracts full parameter set from 520-byte SysEx data for round-trip encoding capability.
+ *
+ * Use this decoder when you need:
+ * - Complete parameter access beyond VCF controls
+ * - Round-trip encoding with encoder-new.ts
+ * - Full MIDI spec compliance
+ * - Future feature development requiring additional parameters
+ *
+ * For lightweight VCF-only parsing, see monologue-parser.ts
  */
 
 import { addLowerBits, getBits, transformDataFrom7BitTo8Bit } from "./utilities";

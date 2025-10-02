@@ -1,6 +1,20 @@
 /**
- * Simplified Monologue SysEx Parser (converted from JavaScript example)
- * Focuses on VCF parameters and patch name for our MVP
+ * Korg Monologue MVP Parameter Parser
+ *
+ * Lightweight implementation focused on VCF controls and patch names.
+ * Optimized for production UI components requiring minimal SysEx parsing.
+ *
+ * Currently used by:
+ * - VCFControls.tsx (cutoff, resonance knobs)
+ * - SimpleMIDIManager (patch name display)
+ *
+ * Features:
+ * - Fast parsing of essential VCF parameters
+ * - Patch name extraction
+ * - Minimal memory footprint (90 lines vs 220 lines)
+ * - Battle-tested in production UI
+ *
+ * For comprehensive parameter access, see decoder.ts
  */
 
 import { addLowerBits, getBits, transformDataFrom7BitTo8Bit } from "./utilities";
