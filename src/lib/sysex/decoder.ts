@@ -56,6 +56,37 @@ export interface MonologueParameters {
     intensity: number; // -512 to +511 (0-1023 raw, adjusted)
     target: number; // 0-3 (PITCH, CUTOFF, AMP, PITCH+CUTOFF)
   };
+  sequencer?: {
+    stepLength: number; // 1-16 (active steps)
+    stepResolution: number; // 0-4 (1/16, 1/8, 1/4, 1/2, 1/1)
+    swing: number; // -75 to +75 (timing swing)
+    stepOnOff: boolean[]; // 16 boolean flags for step on/off
+    motionOnOff: boolean[]; // 16 boolean flags for motion sequencing
+  };
+  motionSequencing?: {
+    slots: Array<{
+      motionOn: boolean; // Motion On/Off flag
+      smoothOn: boolean; // Smooth On/Off flag
+      parameterId: number; // Which parameter to automate (0=None, 13=VCO1 PITCH, etc.)
+      stepEnabled: boolean[]; // 16 boolean flags for this slot's per-step enable
+    }>;
+    stepEvents: Array<{
+      noteNumber: number; // 0-127 (0 = no event)
+      velocity: number; // 0-127 (0 = no event, 1-127 = velocity)
+      gateTime: number; // 0-127 (0-72 = 0-100%, 73-127 = TIE)
+      triggerSwitch: boolean; // Trigger switch on/off
+      motionData: Array<{
+        data1: number; // Primary motion value (0-255)
+        data2: number; // Secondary value for smooth interpolation (0-255)
+        data3: number; // Additional motion data (0-255)
+        data4: number; // Additional motion data (0-255)
+      }>; // 4 motion slots per step
+    }>; // 16 steps
+  };
+  amp?: {
+    attack: number; // 0-127 (AMP EG Attack - CC 16)
+    decay: number; // 0-127 (AMP EG Decay - CC 17)
+  };
   misc?: {
     bpmSync: boolean; // BPM sync on/off
     portamentMode: boolean; // Portament mode on/off
@@ -65,6 +96,38 @@ export interface MonologueParameters {
     sliderAssign: string; // Parameter name
   };
 }
+
+// Motion Parameter ID mapping from CURRENT PROGRAM DATA DUMP.txt
+const MOTION_PARAMETER_ID_MATRIX: { [key: number]: string } = {
+  0: "None",
+  13: "VCO 1 PITCH",
+  14: "VCO 1 SHAPE",
+  15: "VCO 1 OCTAVE",
+  16: "VCO 1 WAVE",
+  17: "VCO 2 PITCH",
+  18: "VCO 2 SHAPE",
+  19: "VCO 2 OCTAVE",
+  20: "VCO 2 WAVE",
+  21: "VCO 1 LEVEL",
+  22: "VCO 2 LEVEL",
+  23: "CUTOFF",
+  24: "RESONANCE",
+  25: "SYNC/RING",
+  26: "ATTACK",
+  27: "DECAY",
+  28: "EG INT",
+  29: "EG TYPE",
+  30: "EG TARGET",
+  31: "LFO RATE",
+  32: "LFO INT",
+  33: "LFO TARGET",
+  34: "LFO TYPE",
+  35: "LFO MODE",
+  37: "DRIVE",
+  40: "PORTAMENT",
+  56: "PITCH BEND",
+  57: "GATE TIME",
+};
 
 // Slider assignment matrix from monologue.js
 const SLIDER_ASSIGN_MATRIX: { [key: number]: string } = {
@@ -181,6 +244,206 @@ export function decodeMonologueParameters(rawSysexData: number[]): MonologuePara
       target: getBits(data[36], 4, 5),
     };
 
+    // Sequencer parameters (bytes 54-66)
+    const sequencer = {
+      stepLength: data[54], // 1-16 steps
+      stepResolution: data[55], // 0-4 (1/16, 1/8, 1/4, 1/2, 1/1)
+      swing: data[56] - 75, // Adjust to -75 to +75 range
+      stepOnOff: [
+        // Byte 64: Steps 1-8
+        getBits(data[64], 0, 0) === 1,
+        getBits(data[64], 1, 1) === 1,
+        getBits(data[64], 2, 2) === 1,
+        getBits(data[64], 3, 3) === 1,
+        getBits(data[64], 4, 4) === 1,
+        getBits(data[64], 5, 5) === 1,
+        getBits(data[64], 6, 6) === 1,
+        getBits(data[64], 7, 7) === 1,
+        // Byte 65: Steps 9-16
+        getBits(data[65], 0, 0) === 1,
+        getBits(data[65], 1, 1) === 1,
+        getBits(data[65], 2, 2) === 1,
+        getBits(data[65], 3, 3) === 1,
+        getBits(data[65], 4, 4) === 1,
+        getBits(data[65], 5, 5) === 1,
+        getBits(data[65], 6, 6) === 1,
+        getBits(data[65], 7, 7) === 1,
+      ],
+      motionOnOff: [
+        // Byte 66: Motion Steps 1-8
+        getBits(data[66], 0, 0) === 1,
+        getBits(data[66], 1, 1) === 1,
+        getBits(data[66], 2, 2) === 1,
+        getBits(data[66], 3, 3) === 1,
+        getBits(data[66], 4, 4) === 1,
+        getBits(data[66], 5, 5) === 1,
+        getBits(data[66], 6, 6) === 1,
+        getBits(data[66], 7, 7) === 1,
+        // Byte 67: Motion Steps 9-16
+        getBits(data[67], 0, 0) === 1,
+        getBits(data[67], 1, 1) === 1,
+        getBits(data[67], 2, 2) === 1,
+        getBits(data[67], 3, 3) === 1,
+        getBits(data[67], 4, 4) === 1,
+        getBits(data[67], 5, 5) === 1,
+        getBits(data[67], 6, 6) === 1,
+        getBits(data[67], 7, 7) === 1,
+      ],
+    };
+
+    // Motion Sequencing data (bytes 72-447)
+    const motionSequencing = {
+      // Motion Slot Parameters (bytes 72-79, 2 bytes per slot)
+      slots: [
+        {
+          motionOn: getBits(data[72], 0, 0) === 1,
+          smoothOn: getBits(data[72], 1, 1) === 1,
+          parameterId: data[73],
+          stepEnabled: [
+            // Slot 1 steps (bytes 80-81)
+            getBits(data[80], 0, 0) === 1,
+            getBits(data[80], 1, 1) === 1,
+            getBits(data[80], 2, 2) === 1,
+            getBits(data[80], 3, 3) === 1,
+            getBits(data[80], 4, 4) === 1,
+            getBits(data[80], 5, 5) === 1,
+            getBits(data[80], 6, 6) === 1,
+            getBits(data[80], 7, 7) === 1,
+            getBits(data[81], 0, 0) === 1,
+            getBits(data[81], 1, 1) === 1,
+            getBits(data[81], 2, 2) === 1,
+            getBits(data[81], 3, 3) === 1,
+            getBits(data[81], 4, 4) === 1,
+            getBits(data[81], 5, 5) === 1,
+            getBits(data[81], 6, 6) === 1,
+            getBits(data[81], 7, 7) === 1,
+          ],
+        },
+        {
+          motionOn: getBits(data[74], 0, 0) === 1,
+          smoothOn: getBits(data[74], 1, 1) === 1,
+          parameterId: data[75],
+          stepEnabled: [
+            // Slot 2 steps (bytes 82-83)
+            getBits(data[82], 0, 0) === 1,
+            getBits(data[82], 1, 1) === 1,
+            getBits(data[82], 2, 2) === 1,
+            getBits(data[82], 3, 3) === 1,
+            getBits(data[82], 4, 4) === 1,
+            getBits(data[82], 5, 5) === 1,
+            getBits(data[82], 6, 6) === 1,
+            getBits(data[82], 7, 7) === 1,
+            getBits(data[83], 0, 0) === 1,
+            getBits(data[83], 1, 1) === 1,
+            getBits(data[83], 2, 2) === 1,
+            getBits(data[83], 3, 3) === 1,
+            getBits(data[83], 4, 4) === 1,
+            getBits(data[83], 5, 5) === 1,
+            getBits(data[83], 6, 6) === 1,
+            getBits(data[83], 7, 7) === 1,
+          ],
+        },
+        {
+          motionOn: getBits(data[76], 0, 0) === 1,
+          smoothOn: getBits(data[76], 1, 1) === 1,
+          parameterId: data[77],
+          stepEnabled: [
+            // Slot 3 steps (bytes 84-85)
+            getBits(data[84], 0, 0) === 1,
+            getBits(data[84], 1, 1) === 1,
+            getBits(data[84], 2, 2) === 1,
+            getBits(data[84], 3, 3) === 1,
+            getBits(data[84], 4, 4) === 1,
+            getBits(data[84], 5, 5) === 1,
+            getBits(data[84], 6, 6) === 1,
+            getBits(data[84], 7, 7) === 1,
+            getBits(data[85], 0, 0) === 1,
+            getBits(data[85], 1, 1) === 1,
+            getBits(data[85], 2, 2) === 1,
+            getBits(data[85], 3, 3) === 1,
+            getBits(data[85], 4, 4) === 1,
+            getBits(data[85], 5, 5) === 1,
+            getBits(data[85], 6, 6) === 1,
+            getBits(data[85], 7, 7) === 1,
+          ],
+        },
+        {
+          motionOn: getBits(data[78], 0, 0) === 1,
+          smoothOn: getBits(data[78], 1, 1) === 1,
+          parameterId: data[79],
+          stepEnabled: [
+            // Slot 4 steps (bytes 86-87)
+            getBits(data[86], 0, 0) === 1,
+            getBits(data[86], 1, 1) === 1,
+            getBits(data[86], 2, 2) === 1,
+            getBits(data[86], 3, 3) === 1,
+            getBits(data[86], 4, 4) === 1,
+            getBits(data[86], 5, 5) === 1,
+            getBits(data[86], 6, 6) === 1,
+            getBits(data[86], 7, 7) === 1,
+            getBits(data[87], 0, 0) === 1,
+            getBits(data[87], 1, 1) === 1,
+            getBits(data[87], 2, 2) === 1,
+            getBits(data[87], 3, 3) === 1,
+            getBits(data[87], 4, 4) === 1,
+            getBits(data[87], 5, 5) === 1,
+            getBits(data[87], 6, 6) === 1,
+            getBits(data[87], 7, 7) === 1,
+          ],
+        },
+      ],
+      // Step Event Data (bytes 96-447, 22 bytes per step × 16 steps)
+      stepEvents: [],
+    };
+
+    // Extract Step Event Data for all 16 steps
+    for (let step = 0; step < 16; step++) {
+      const stepOffset = 96 + step * 22; // 22 bytes per step
+
+      motionSequencing.stepEvents.push({
+        noteNumber: data[stepOffset + 0],
+        velocity: data[stepOffset + 2],
+        gateTime: getBits(data[stepOffset + 4], 0, 6), // Bits 0-6
+        triggerSwitch: getBits(data[stepOffset + 4], 7, 7) === 1, // Bit 7
+        motionData: [
+          // Motion Slot 1 data for this step
+          {
+            data1: data[stepOffset + 6],
+            data2: data[stepOffset + 7],
+            data3: data[stepOffset + 8],
+            data4: data[stepOffset + 9],
+          },
+          // Motion Slot 2 data for this step
+          {
+            data1: data[stepOffset + 10],
+            data2: data[stepOffset + 11],
+            data3: data[stepOffset + 12],
+            data4: data[stepOffset + 13],
+          },
+          // Motion Slot 3 data for this step
+          {
+            data1: data[stepOffset + 14],
+            data2: data[stepOffset + 15],
+            data3: data[stepOffset + 16],
+            data4: data[stepOffset + 17],
+          },
+          // Motion Slot 4 data for this step
+          {
+            data1: data[stepOffset + 18],
+            data2: data[stepOffset + 19],
+            data3: data[stepOffset + 20],
+            data4: data[stepOffset + 21],
+          },
+        ],
+      });
+    }
+
+    // AMP envelope parameters
+    const amp = {
+      attack: data[16], // AMP EG Attack (CC 16)
+      decay: data[17], // AMP EG Decay (CC 17)
+    };
+
     // Misc parameters
     const misc = {
       bpmSync: getBits(data[44], 3, 3) === 1,
@@ -202,6 +465,9 @@ export function decodeMonologueParameters(rawSysexData: number[]): MonologuePara
       filter,
       envelope,
       lfo,
+      sequencer,
+      motionSequencing,
+      amp,
       misc,
     };
   } catch (error) {

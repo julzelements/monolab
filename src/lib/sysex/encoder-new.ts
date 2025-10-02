@@ -112,17 +112,34 @@ function transformDataFrom8BitTo7Bit(data8bit: number[]): number[] {
  * Encode MonologueParameters back to SysEx bytes
  */
 export function encodeMonologueParameters(params: MonologueParameters): number[] {
-  if (
-    !params.isValid ||
-    !params.drive ||
-    !params.oscillators ||
-    !params.filter ||
-    !params.envelope ||
-    !params.lfo ||
-    !params.misc
-  ) {
-    throw new Error("Invalid parameters: missing required sections");
+  // Check each required section and collect missing ones
+  const missingSections: string[] = [];
+
+  if (!params.isValid) missingSections.push("isValid=false");
+  if (!params.drive && params.drive !== 0) missingSections.push("drive");
+  if (!params.oscillators) missingSections.push("oscillators");
+  if (!params.filter) missingSections.push("filter");
+  if (!params.envelope) missingSections.push("envelope");
+  if (!params.lfo) missingSections.push("lfo");
+  if (!params.sequencer) missingSections.push("sequencer");
+  if (!params.motionSequencing) missingSections.push("motionSequencing");
+  if (!params.amp) missingSections.push("amp");
+  if (!params.misc) missingSections.push("misc");
+
+  if (missingSections.length > 0) {
+    throw new Error(`Invalid parameters: missing required sections: [${missingSections.join(", ")}]`);
   }
+
+  // Type assertions: we've validated all required sections exist above
+  const drive = params.drive!;
+  const oscillators = params.oscillators!;
+  const filter = params.filter!;
+  const envelope = params.envelope!;
+  const lfo = params.lfo!;
+  const sequencer = params.sequencer!;
+  const motionSequencing = params.motionSequencing!;
+  const amp = params.amp!;
+  const misc = params.misc!;
 
   // Create 8-bit data array (448 bytes as produced by transformDataFrom7BitTo8Bit)
   const data = new Array(448).fill(0);
@@ -134,62 +151,135 @@ export function encodeMonologueParameters(params: MonologueParameters): number[]
   }
 
   // Encode VCO 1 parameters
-  data[17] = getHighBits(params.oscillators.vco1.shape);
-  data[20] = getHighBits(params.oscillators.vco1.level);
-  data[30] = setBits(data[30], params.oscillators.vco1.wave, 6, 7);
-  data[30] = packLowerBits(data[30], params.oscillators.vco1.shape, 2);
+  data[17] = getHighBits(oscillators.vco1.shape);
+  data[20] = getHighBits(oscillators.vco1.level);
+  data[30] = setBits(data[30], oscillators.vco1.wave, 6, 7);
+  data[30] = packLowerBits(data[30], oscillators.vco1.shape, 2);
 
   // Encode VCO 2 parameters
-  data[18] = getHighBits(params.oscillators.vco2.pitch);
-  data[19] = getHighBits(params.oscillators.vco2.shape);
-  data[21] = getHighBits(params.oscillators.vco2.level);
-  data[31] = setBits(data[31], params.oscillators.vco2.wave, 6, 7);
-  data[31] = setBits(data[31], params.oscillators.vco2.octave, 4, 5);
-  data[31] = packLowerBits(data[31], params.oscillators.vco2.shape, 2);
-  data[31] = packLowerBits(data[31], params.oscillators.vco2.pitch, 0);
-  data[32] = setBits(data[32], params.oscillators.vco2.sync, 0, 1);
+  data[18] = getHighBits(oscillators.vco2.pitch);
+  data[19] = getHighBits(oscillators.vco2.shape);
+  data[21] = getHighBits(oscillators.vco2.level);
+  data[31] = setBits(data[31], oscillators.vco2.wave, 6, 7);
+  data[31] = setBits(data[31], oscillators.vco2.octave, 4, 5);
+  data[31] = packLowerBits(data[31], oscillators.vco2.shape, 2);
+  data[31] = packLowerBits(data[31], oscillators.vco2.pitch, 0);
+  data[32] = setBits(data[32], oscillators.vco2.sync, 0, 1);
 
   // Encode Filter parameters (VCF)
-  data[22] = getHighBits(params.filter.cutoff);
-  data[23] = getHighBits(params.filter.resonance);
+  data[22] = getHighBits(filter.cutoff);
+  data[23] = getHighBits(filter.resonance);
 
   // Encode Envelope parameters
-  data[24] = getHighBits(params.envelope.attack);
-  data[25] = getHighBits(params.envelope.decay);
-  data[26] = getHighBits(params.envelope.intensity + 512); // Convert from bipolar
-  data[34] = setBits(data[34], params.envelope.type, 0, 1);
-  data[34] = packLowerBits(data[34], params.envelope.attack, 2);
-  data[34] = packLowerBits(data[34], params.envelope.decay, 4);
-  data[34] = setBits(data[34], params.envelope.target, 6, 7);
+  data[24] = getHighBits(envelope.attack);
+  data[25] = getHighBits(envelope.decay);
+  data[26] = getHighBits(envelope.intensity + 512); // Convert from bipolar
+  data[34] = setBits(data[34], envelope.type, 0, 1);
+  data[34] = packLowerBits(data[34], envelope.attack, 2);
+  data[34] = packLowerBits(data[34], envelope.decay, 4);
+  data[34] = setBits(data[34], envelope.target, 6, 7);
 
   // Encode LFO parameters
-  data[27] = getHighBits(params.lfo.rate);
-  data[28] = getHighBits(params.lfo.intensity + 512); // Convert from bipolar
-  data[36] = setBits(data[36], params.lfo.wave, 0, 1);
-  data[36] = setBits(data[36], params.lfo.mode, 2, 3);
-  data[36] = setBits(data[36], params.lfo.target, 4, 5);
+  data[27] = getHighBits(lfo.rate);
+  data[28] = getHighBits(lfo.intensity + 512); // Convert from bipolar
+  data[36] = setBits(data[36], lfo.wave, 0, 1);
+  data[36] = setBits(data[36], lfo.mode, 2, 3);
+  data[36] = setBits(data[36], lfo.target, 4, 5);
 
   // Encode Drive parameter
-  data[29] = getHighBits(params.drive);
+  data[29] = getHighBits(drive);
 
   // Encode packed lower bits
-  data[33] = packLowerBits(data[33], params.oscillators.vco1.level, 0);
-  data[33] = packLowerBits(data[33], params.oscillators.vco2.level, 2);
-  data[33] = packLowerBits(data[33], params.filter.cutoff, 4);
-  data[33] = packLowerBits(data[33], params.filter.resonance, 6);
+  data[33] = packLowerBits(data[33], oscillators.vco1.level, 0);
+  data[33] = packLowerBits(data[33], oscillators.vco2.level, 2);
+  data[33] = packLowerBits(data[33], filter.cutoff, 4);
+  data[33] = packLowerBits(data[33], filter.resonance, 6);
 
-  data[35] = packLowerBits(data[35], params.envelope.intensity + 512, 0);
-  data[35] = packLowerBits(data[35], params.lfo.rate, 2);
-  data[35] = packLowerBits(data[35], params.lfo.intensity + 512, 4);
-  data[35] = packLowerBits(data[35], params.drive, 6);
+  data[35] = packLowerBits(data[35], envelope.intensity + 512, 0);
+  data[35] = packLowerBits(data[35], lfo.rate, 2);
+  data[35] = packLowerBits(data[35], lfo.intensity + 512, 4);
+  data[35] = packLowerBits(data[35], drive, 6);
+
+  // Encode Sequencer parameters (bytes 54-67)
+  data[54] = sequencer.stepLength; // 1-16 steps
+  data[55] = sequencer.stepResolution; // 0-4 resolution
+  data[56] = sequencer.swing + 75; // Adjust from -75 to +75 range
+
+  // Encode step on/off states (bytes 64-65)
+  for (let i = 0; i < 8; i++) {
+    data[64] = setBits(data[64], sequencer.stepOnOff[i] ? 1 : 0, i, i);
+  }
+  for (let i = 0; i < 8; i++) {
+    data[65] = setBits(data[65], sequencer.stepOnOff[i + 8] ? 1 : 0, i, i);
+  }
+
+  // Encode motion on/off states (bytes 66-67)
+  for (let i = 0; i < 8; i++) {
+    data[66] = setBits(data[66], sequencer.motionOnOff[i] ? 1 : 0, i, i);
+  }
+  for (let i = 0; i < 8; i++) {
+    data[67] = setBits(data[67], sequencer.motionOnOff[i + 8] ? 1 : 0, i, i);
+  }
+
+  // Encode Motion Sequencing data (bytes 72-447)
+  // Motion Slot Parameters (bytes 72-79, 2 bytes per slot)
+  for (let slot = 0; slot < 4; slot++) {
+    const slotData = motionSequencing.slots[slot];
+    const paramOffset = 72 + slot * 2;
+
+    data[paramOffset] = setBits(data[paramOffset], slotData.motionOn ? 1 : 0, 0, 0);
+    data[paramOffset] = setBits(data[paramOffset], slotData.smoothOn ? 1 : 0, 1, 1);
+    data[paramOffset + 1] = slotData.parameterId;
+  }
+
+  // Motion Slot Step Enable flags (bytes 80-87)
+  for (let slot = 0; slot < 4; slot++) {
+    const slotData = motionSequencing.slots[slot];
+    const stepOffset = 80 + slot * 2;
+
+    // First 8 steps
+    for (let i = 0; i < 8; i++) {
+      data[stepOffset] = setBits(data[stepOffset], slotData.stepEnabled[i] ? 1 : 0, i, i);
+    }
+    // Next 8 steps
+    for (let i = 0; i < 8; i++) {
+      data[stepOffset + 1] = setBits(data[stepOffset + 1], slotData.stepEnabled[i + 8] ? 1 : 0, i, i);
+    }
+  }
+
+  // Step Event Data (bytes 96-447, 22 bytes per step × 16 steps)
+  for (let step = 0; step < 16; step++) {
+    const stepData = motionSequencing.stepEvents[step];
+    const stepOffset = 96 + step * 22;
+
+    data[stepOffset + 0] = stepData.noteNumber;
+    data[stepOffset + 2] = stepData.velocity;
+    data[stepOffset + 4] = setBits(data[stepOffset + 4], stepData.gateTime, 0, 6);
+    data[stepOffset + 4] = setBits(data[stepOffset + 4], stepData.triggerSwitch ? 1 : 0, 7, 7);
+
+    // Motion data for all 4 slots
+    for (let slot = 0; slot < 4; slot++) {
+      const motionData = stepData.motionData[slot];
+      const motionOffset = stepOffset + 6 + slot * 4;
+
+      data[motionOffset + 0] = motionData.data1;
+      data[motionOffset + 1] = motionData.data2;
+      data[motionOffset + 2] = motionData.data3;
+      data[motionOffset + 3] = motionData.data4;
+    }
+  }
+
+  // Encode AMP envelope parameters
+  data[16] = amp.attack; // AMP EG Attack (CC 16)
+  data[17] = amp.decay; // AMP EG Decay (CC 17)
 
   // Encode Misc parameters
-  data[41] = params.misc.portamentTime;
-  data[42] = SLIDER_ASSIGN_REVERSE_MATRIX[params.misc.sliderAssign] || 23; // Default to CUTOFF
-  data[44] = setBits(data[44], params.misc.portamentMode ? 1 : 0, 0, 0);
-  data[44] = setBits(data[44], params.misc.bpmSync ? 1 : 0, 3, 3);
-  data[44] = setBits(data[44], params.misc.cutoffVelocity, 4, 5);
-  data[44] = setBits(data[44], params.misc.cutoffKeyTrack, 6, 7);
+  data[41] = misc.portamentTime;
+  data[42] = SLIDER_ASSIGN_REVERSE_MATRIX[misc.sliderAssign] || 23; // Default to CUTOFF
+  data[44] = setBits(data[44], misc.portamentMode ? 1 : 0, 0, 0);
+  data[44] = setBits(data[44], misc.bpmSync ? 1 : 0, 3, 3);
+  data[44] = setBits(data[44], misc.cutoffVelocity, 4, 5);
+  data[44] = setBits(data[44], misc.cutoffKeyTrack, 6, 7);
 
   // Convert 8-bit data back to 7-bit MIDI data
   const midiData = transformDataFrom8BitTo7Bit(data);
