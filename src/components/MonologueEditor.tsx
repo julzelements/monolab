@@ -77,7 +77,7 @@ export function MonologueEditor({ parameters, onParametersChange, className = ""
   }
 
   return (
-    <div className={`w-full max-w-[1200px] mx-auto ${className}`} style={{ height: '900px' }}>
+    <div className={`w-full max-w-[1200px] mx-auto ${className}`} style={{ height: "900px" }}>
       {/* Patch Name Header - Compact */}
       <div className="p-2 border rounded mb-3 text-center">
         <h2 className="text-lg font-semibold">Patch: {parameters.patchName}</h2>
@@ -85,7 +85,6 @@ export function MonologueEditor({ parameters, onParametersChange, className = ""
 
       {/* Main Grid - 6 Columns */}
       <div className="grid grid-cols-6 gap-2 h-[calc(100%-60px)]">
-        
         {/* Column 1: VCO1 */}
         <div className="space-y-2">
           <div className="p-2 border rounded">
@@ -99,7 +98,9 @@ export function MonologueEditor({ parameters, onParametersChange, className = ""
                   className="w-full p-1 border rounded text-xs"
                 >
                   {VCO1_WAVE_TYPES.map((wave, idx) => (
-                    <option key={idx} value={idx}>{wave}</option>
+                    <option key={idx} value={idx}>
+                      {wave}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -136,7 +137,9 @@ export function MonologueEditor({ parameters, onParametersChange, className = ""
                   className="w-full p-1 border rounded text-xs"
                 >
                   {VCO2_WAVE_TYPES.map((wave, idx) => (
-                    <option key={idx} value={idx}>{wave}</option>
+                    <option key={idx} value={idx}>
+                      {wave}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -148,7 +151,9 @@ export function MonologueEditor({ parameters, onParametersChange, className = ""
                   className="w-full p-1 border rounded text-xs"
                 >
                   {OCTAVE_OPTIONS.map((octave, idx) => (
-                    <option key={idx} value={idx}>{octave}</option>
+                    <option key={idx} value={idx}>
+                      {octave}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -160,7 +165,9 @@ export function MonologueEditor({ parameters, onParametersChange, className = ""
                   className="w-full p-1 border rounded text-xs"
                 >
                   {SYNC_RING_OPTIONS.map((sync, idx) => (
-                    <option key={idx} value={idx}>{sync}</option>
+                    <option key={idx} value={idx}>
+                      {sync}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -246,7 +253,9 @@ export function MonologueEditor({ parameters, onParametersChange, className = ""
                   className="w-full p-1 border rounded text-xs"
                 >
                   {ENVELOPE_TYPES.map((type, idx) => (
-                    <option key={idx} value={idx}>{type}</option>
+                    <option key={idx} value={idx}>
+                      {type}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -258,7 +267,9 @@ export function MonologueEditor({ parameters, onParametersChange, className = ""
                   className="w-full p-1 border rounded text-xs"
                 >
                   {EG_TARGET_TYPES.map((target, idx) => (
-                    <option key={idx} value={idx}>{target}</option>
+                    <option key={idx} value={idx}>
+                      {target}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -303,7 +314,9 @@ export function MonologueEditor({ parameters, onParametersChange, className = ""
                   className="w-full p-1 border rounded text-xs"
                 >
                   {LFO_WAVE_TYPES.map((wave, idx) => (
-                    <option key={idx} value={idx}>{wave}</option>
+                    <option key={idx} value={idx}>
+                      {wave}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -315,7 +328,9 @@ export function MonologueEditor({ parameters, onParametersChange, className = ""
                   className="w-full p-1 border rounded text-xs"
                 >
                   {LFO_MODES.map((mode, idx) => (
-                    <option key={idx} value={idx}>{mode}</option>
+                    <option key={idx} value={idx}>
+                      {mode}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -327,7 +342,9 @@ export function MonologueEditor({ parameters, onParametersChange, className = ""
                   className="w-full p-1 border rounded text-xs"
                 >
                   {LFO_TARGET_TYPES.map((target, idx) => (
-                    <option key={idx} value={idx}>{target}</option>
+                    <option key={idx} value={idx}>
+                      {target}
+                    </option>
                   ))}
                 </select>
               </div>
