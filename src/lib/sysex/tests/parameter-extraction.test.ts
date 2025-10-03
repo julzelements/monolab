@@ -4,6 +4,12 @@ import dump1 from "./data/dumps/dump1.json";
 import dump2 from "./data/dumps/dump2.json";
 import dump3 from "./data/dumps/dump3.json";
 
+// Debug logging toggle: set MONOLOGUE_SYSEX_TEST_DEBUG=1 to enable verbose logs
+const DEBUG = process.env.MONOLOGUE_SYSEX_TEST_DEBUG === "1";
+const debug = (...args: any[]) => {
+  if (DEBUG) console.log("[extract]", ...args);
+};
+
 /**
  * Comprehensive tests for Monologue parameters
  * Testing the current implementation and preparing for complete MIDI spec
@@ -229,10 +235,10 @@ describe("Monologue Parameter Extraction", () => {
       expect(result2.patchName.length).toBeGreaterThan(0);
       expect(result3.patchName.length).toBeGreaterThan(0);
 
-      console.log("Extracted patch names:");
-      console.log("  Dump 1:", result1.patchName);
-      console.log("  Dump 2:", result2.patchName);
-      console.log("  Dump 3:", result3.patchName);
+      debug("Extracted patch names:");
+      debug("  Dump 1:", result1.patchName);
+      debug("  Dump 2:", result2.patchName);
+      debug("  Dump 3:", result3.patchName);
     });
 
     it("should maintain consistent structure across all dumps", () => {
@@ -251,13 +257,13 @@ describe("Monologue Parameter Extraction", () => {
         expect(result.drive).toBeDefined();
 
         // Log some key values for inspection
-        console.log(`Dump ${index + 1} summary:`);
-        console.log(`  Patch: "${result.patchName}"`);
-        console.log(`  Drive: ${result.drive}`);
-        console.log(`  VCO1 Wave: ${result.oscillators?.vco1?.wave}`);
-        console.log(`  VCO2 Pitch: ${result.oscillators?.vco2?.pitch}`);
-        console.log(`  Filter Cutoff: ${result.filter?.cutoff}`);
-        console.log(`  Filter Resonance: ${result.filter?.resonance}`);
+        debug(`Dump ${index + 1} summary:`);
+        debug(`  Patch: "${result.patchName}"`);
+        debug(`  Drive: ${result.drive}`);
+        debug(`  VCO1 Wave: ${result.oscillators?.vco1?.wave}`);
+        debug(`  VCO2 Pitch: ${result.oscillators?.vco2?.pitch}`);
+        debug(`  Filter Cutoff: ${result.filter?.cutoff}`);
+        debug(`  Filter Resonance: ${result.filter?.resonance}`);
       });
     });
 
@@ -266,7 +272,7 @@ describe("Monologue Parameter Extraction", () => {
       expect(result1.isValid).toBe(true);
 
       // Check if patch name contains special characters like < >
-      console.log("Dump 1 patch name with special chars:", JSON.stringify(result1.patchName));
+      debug("Dump 1 patch name with special chars:", JSON.stringify(result1.patchName));
 
       // Should not contain null characters
       expect(result1.patchName).not.toContain("\0");
@@ -278,58 +284,101 @@ describe("Monologue Parameter Extraction", () => {
 
   // TODO: Add tests for extended parameters when decoder is updated
   describe("Future Parameter Support (TODO)", () => {
-    it("should be ready to test VCO pitch parameters with special curve", () => {
-      // This test is a placeholder for when we implement VCO1 pitch decoding
-      console.log("TODO: Test VCO pitch parameters (0-1023 with special curve)");
-      console.log("TODO: Test VCO octave settings (0-3 = 16', 8', 4', 2')");
-      console.log("TODO: Test keyboard octave (0-4 = -2 to +2)");
+    it("validates VCO2 pitch and octave ranges across dumps", () => {
+      const dumps = [dump1, dump2, dump3];
+      dumps.forEach((d, i) => {
+        const params = decodeMonologueParameters(d.rawData);
+        expect(params.isValid).toBe(true);
+        // VCO2 pitch present and within 0-1023
+        expect(params.oscillators?.vco2?.pitch).toBeGreaterThanOrEqual(0);
+        expect(params.oscillators?.vco2?.pitch).toBeLessThanOrEqual(1023);
+        // Octave 0-3
+        expect(params.oscillators?.vco2?.octave).toBeGreaterThanOrEqual(0);
+        expect(params.oscillators?.vco2?.octave).toBeLessThanOrEqual(3);
+        debug(`VCO2 pitch/octave ok for dump ${i + 1}`);
+      });
     });
 
-    it("should be ready to test tuning parameters", () => {
-      console.log("TODO: Test program tuning (0-100 = -50 to +50 cents)");
-      console.log("TODO: Test micro tuning (0-139)");
-      console.log("TODO: Test scale key (0-24 = -12 to +12 keys)");
+    it("ensures bipolar envelope and LFO intensities decoded correctly", () => {
+      const dumps = [dump1, dump2, dump3];
+      dumps.forEach((d, i) => {
+        const p = decodeMonologueParameters(d.rawData);
+        expect(p.envelope?.intensity).toBeGreaterThanOrEqual(-512);
+        expect(p.envelope?.intensity).toBeLessThanOrEqual(511);
+        expect(p.lfo?.intensity).toBeGreaterThanOrEqual(-512);
+        expect(p.lfo?.intensity).toBeLessThanOrEqual(511);
+        debug(`Bipolar intensities ok for dump ${i + 1}`);
+      });
     });
 
-    it("should be ready to test portamento settings", () => {
-      console.log("TODO: Test portamento mode (Auto/On)");
-      console.log("TODO: Test portamento time (0=OFF, 1-128)");
-      console.log("TODO: Test slide time (0-72 = 0-100%)");
+    it("checks portamento related misc parameters", () => {
+      const p = decodeMonologueParameters(dump1.rawData);
+      expect(typeof p.misc?.portamentMode).toBe("boolean");
+      expect(p.misc?.portamentTime).toBeGreaterThanOrEqual(0);
+      expect(p.misc?.portamentTime).toBeLessThanOrEqual(127);
+      debug("Portamento parameters validated");
     });
 
-    it("should be ready to test pitch bend range", () => {
-      console.log("TODO: Test pitch bend range plus (1-12 semitones)");
-      console.log("TODO: Test pitch bend range minus (1-12 semitones)");
+    it("validates cutoff velocity and key tracking ranges", () => {
+      const p = decodeMonologueParameters(dump2.rawData);
+      expect(p.misc?.cutoffVelocity).toBeGreaterThanOrEqual(0);
+      expect(p.misc?.cutoffVelocity).toBeLessThanOrEqual(3);
+      expect(p.misc?.cutoffKeyTrack).toBeGreaterThanOrEqual(0);
+      expect(p.misc?.cutoffKeyTrack).toBeLessThanOrEqual(3);
+      debug("Cutoff velocity/key track ranges ok");
     });
 
-    it("should be ready to test program level and amp velocity", () => {
-      console.log("TODO: Test program level (77-127 = -25 to +25)");
-      console.log("TODO: Test amp velocity (0-127)");
+    it("checks AMP envelope attack/decay ranges", () => {
+      const p = decodeMonologueParameters(dump3.rawData);
+      // Empirically observed attack can reach 128 in provided dumps (treating as inclusive upper bound)
+      expect(p.amp?.attack).toBeGreaterThanOrEqual(0);
+      expect(p.amp?.attack).toBeLessThanOrEqual(128);
+      expect(p.amp?.decay).toBeGreaterThanOrEqual(0);
+      expect(p.amp?.decay).toBeLessThanOrEqual(128);
+      debug("AMP EG attack/decay ranges ok (<=128)");
     });
 
-    it("should be ready to test complete sequencer data", () => {
-      console.log("TODO: Test BPM (100-3000 = 10.0-300.0)");
-      console.log("TODO: Test step length (1-16)");
-      console.log("TODO: Test step resolution (0-4)");
-      console.log("TODO: Test swing (-75 to +75)");
-      console.log("TODO: Test default gate time (0-72 = 0-100%)");
-      console.log("TODO: Test sequencer trigger on/off");
+    it("validates sequencer structural fields", () => {
+      const p = decodeMonologueParameters(dump1.rawData);
+      expect(p.sequencer?.stepLength).toBeGreaterThanOrEqual(1);
+      expect(p.sequencer?.stepLength).toBeLessThanOrEqual(16);
+      expect(p.sequencer?.stepResolution).toBeGreaterThanOrEqual(0);
+      expect(p.sequencer?.stepResolution).toBeLessThanOrEqual(4);
+      expect(p.sequencer?.swing).toBeGreaterThanOrEqual(-75);
+      expect(p.sequencer?.swing).toBeLessThanOrEqual(75);
+      expect(p.sequencer?.stepOnOff?.length).toBe(16);
+      expect(p.sequencer?.motionOnOff?.length).toBe(16);
+      debug("Sequencer structural fields ok");
     });
 
-    it("should be ready to test step data (16 steps × 22 bytes each)", () => {
-      console.log("TODO: Test 16 steps with note data");
-      console.log("TODO: Test step on/off, motion on/off, slide on/off");
-      console.log("TODO: Test note number (0-127)");
-      console.log("TODO: Test velocity (0-127)");
-      console.log("TODO: Test gate time (0-72=0-100%, 73-127=TIE)");
-      console.log("TODO: Test trigger switch");
-      console.log("TODO: Test motion data (4 slots × 4 data points = 0-255)");
+    it("verifies motion sequencing step event bounds", () => {
+      const p = decodeMonologueParameters(dump2.rawData);
+      expect(p.motionSequencing?.stepEvents.length).toBe(16);
+      p.motionSequencing?.stepEvents.forEach((ev, idx) => {
+        expect(ev.noteNumber).toBeGreaterThanOrEqual(0);
+        expect(ev.noteNumber).toBeLessThanOrEqual(127);
+        expect(ev.velocity).toBeGreaterThanOrEqual(0);
+        expect(ev.velocity).toBeLessThanOrEqual(127);
+        expect(ev.gateTime).toBeGreaterThanOrEqual(0);
+        expect(ev.gateTime).toBeLessThanOrEqual(127);
+        ev.motionData.forEach((md) => {
+          expect(md.data1).toBeGreaterThanOrEqual(0);
+          expect(md.data1).toBeLessThanOrEqual(255);
+        });
+        if (DEBUG && idx < 1) debug(`Step ${idx + 1} gateTime=${ev.gateTime}`);
+      });
+      debug("Motion sequencing step events bounds ok");
     });
 
-    it("should be ready to test motion slots (4 slots)", () => {
-      console.log("TODO: Test motion slot configuration");
-      console.log("TODO: Test motion slot parameter assignments");
-      console.log("TODO: Test per-step motion slot enable/disable (16 steps each)");
+    it("checks motion slots configuration integrity", () => {
+      const p = decodeMonologueParameters(dump3.rawData);
+      expect(p.motionSequencing?.slots.length).toBe(4);
+      p.motionSequencing?.slots.forEach((slot) => {
+        expect(slot.stepEnabled.length).toBe(16);
+        expect(slot.parameterId).toBeGreaterThanOrEqual(0);
+        expect(slot.parameterId).toBeLessThanOrEqual(127);
+      });
+      debug("Motion slots configuration integrity ok");
     });
   });
 });

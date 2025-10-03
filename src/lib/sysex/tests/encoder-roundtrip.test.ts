@@ -1,6 +1,12 @@
 import { describe, it, expect } from "vitest";
 import { encodeMonologueParameters } from "../encoder";
 import { decodeMonologueParameters } from "../decoder";
+
+// Debug logging toggle: set MONOLOGUE_SYSEX_TEST_DEBUG=1 to enable verbose logs
+const DEBUG = process.env.MONOLOGUE_SYSEX_TEST_DEBUG === "1";
+const debug = (...args: any[]) => {
+  if (DEBUG) console.log("[roundtrip]", ...args);
+};
 import fs from "fs";
 import path from "path";
 
@@ -15,15 +21,15 @@ function testRoundTrip(sysExData: number[]): {
   try {
     // Parse original
     const original = decodeMonologueParameters(sysExData);
-    console.log("Original parsed successfully:", !!original);
+    debug("Original parsed successfully:", !!original);
 
     // Encode back
     const encoded = encodeMonologueParameters(original);
-    console.log("Encoded successfully, size:", encoded.length);
+    debug("Encoded successfully, size:", encoded.length);
 
     // Parse again
     const roundTrip = decodeMonologueParameters(encoded);
-    console.log("Round-trip parsed successfully:", !!roundTrip);
+    debug("Round-trip parsed successfully:", !!roundTrip);
 
     // Compare
     const differences: string[] = [];
@@ -82,8 +88,8 @@ describe("Monologue Encoder", () => {
         const roundTripResult = testRoundTrip(dump.rawData);
 
         // Log differences if any
-        if (!roundTripResult.success) {
-          console.log(`${dumpFile} differences:`, roundTripResult.differences);
+        if (!roundTripResult.success && DEBUG) {
+          console.warn(`[roundtrip] ${dumpFile} differences:`, roundTripResult.differences);
         }
 
         expect(roundTripResult.success).toBe(true);

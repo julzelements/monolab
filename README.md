@@ -123,6 +123,39 @@ Current codebase now includes an initial end-to-end path for saving a raw Monolo
 
 ---
 
+## 🧪 Test Suite & Debug Logging
+
+The project includes a comprehensive SysEx test suite (round‑trip encode/decode, full parameter extraction, validation, diff, and safety wrappers).
+
+By default tests run quietly. To enable verbose diagnostic logging for round‑trip and parameter extraction tests, set an environment variable:
+
+```bash
+MONOLOGUE_SYSEX_TEST_DEBUG=1 npm test --silent
+```
+
+Or for a single run (non watch mode):
+
+```bash
+MONOLOGUE_SYSEX_TEST_DEBUG=1 npx vitest --run
+```
+
+What it shows when enabled:
+
+- Round‑trip parse/encode status per SysEx dump
+- Parameter extraction summaries (patch name, drive, key oscillator + filter values)
+- Placeholder TODO traces for future extended spec assertions
+
+Leave the flag unset for CI or routine local runs to keep output minimal.
+
+### Adding New Tests
+
+1. Place new test files in `src/lib/sysex/tests/`.
+2. Import from `src/lib/sysex/index.ts` where possible (public API) instead of deep paths.
+3. If adding large fixture data, store raw dumps under `src/lib/sysex/tests/data/`.
+4. Keep noisy inspection logs behind the `MONOLOGUE_SYSEX_TEST_DEBUG` gate.
+
+---
+
 ---
 
 ## 🎯 Original Specification
