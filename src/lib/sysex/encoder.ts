@@ -1,13 +1,13 @@
 /**
- * Korg Monologue SysEx Data Encoder/Decoder
+ * Korg Monologue SysEx Core Encoder / Decoder
  *
- * Handles the conversion between 7-bit MIDI data and 8-bit internal data
- * as specified in the Korg Monologue MIDI Implementation Chart.
+ * Responsibilities:
+ * 1. Low-level 7-bit <-> 8-bit packing/unpacking (groups of 7 data bytes + 1 MSB byte)
+ * 2. High-level round-trip parameter encoding (encodeMonologueParameters)
  *
- * Key Concepts:
- * - MIDI SysEx can only contain 7-bit values (0-127)
- * - Internal data uses full 8-bit values (0-255) and even 10-bit values (0-1023)
- * - Conversion packs/unpacks MSBs separately according to Korg's specification
+ * This file was consolidated from legacy encoder.ts (transform only) and encoder-new.ts (round-trip
+ * parameter encoder). The API surface now exposes both transformation helpers and the full
+ * MonologueParameters -> SysEx encoder in a single place for clarity and maintainability.
  */
 
 export interface DecodedSysExData {
@@ -31,6 +31,10 @@ export interface EncodedSysExData {
   /** Any error message */
   error?: string;
 }
+
+// ---------------------------------------------------------------------------
+// Low-level transformation utilities (existing implementation preserved)
+// ---------------------------------------------------------------------------
 
 /**
  * Convert 7-bit MIDI SysEx data to 8-bit internal data
@@ -178,4 +182,179 @@ export function is7BitSafe(data: number[]): boolean {
  */
 export function is8BitSafe(data: number[]): boolean {
   return data.every((byte) => byte >= 0 && byte <= 255);
+}
+
+// ---------------------------------------------------------------------------
+// High-level round-trip parameter encoder (merged from encoder-new.ts)
+// ---------------------------------------------------------------------------
+import { addLowerBits, getBits, transformDataFrom7BitTo8Bit } from "./utilities"; // getBits used by tests elsewhere
+import { MonologueParameters } from "./decoder";
+
+const SLIDER_ASSIGN_REVERSE_MATRIX: { [key: string]: number } = {
+  "VCO 1 PITCH": 13,
+  "VCO 1 SHAPE": 14,
+  "VCO 2 PITCH": 17,
+  "VCO 2 SHAPE": 18,
+  "VCO 1 LEVEL": 21,
+  CUTOFF: 23,
+  RESONANCE: 24,
+  ATTACK: 26,
+  DECAY: 27,
+  "EG INT": 28,
+  "LFO RATE": 31,
+  "LFO INT": 32,
+  PORTAMENT: 40,
+  "PITCH BEND": 56,
+  "GATE TIME": 57,
+};
+
+function getHighBits(value10bit: number): number {
+  return (value10bit >> 2) & 0xff;
+}
+function getLowBits(value10bit: number): number {
+  return value10bit & 0x03;
+}
+function setBits(targetByte: number, value: number, startBit: number, endBit: number): number {
+  const bitCount = endBit - startBit + 1;
+  const mask = ((1 << bitCount) - 1) << startBit;
+  return (targetByte & ~mask) | ((value & ((1 << bitCount) - 1)) << startBit);
+}
+function packLowerBits(targetByte: number, value10bit: number, offset: number): number {
+  const lowBits = getLowBits(value10bit);
+  return setBits(targetByte, lowBits, offset, offset + 1);
+}
+function transformDataFrom8BitTo7Bit(data8bit: number[]): number[] {
+  const result: number[] = [];
+  for (let i = 0; i < data8bit.length; i += 7) {
+    const group = data8bit.slice(i, i + 7);
+    let highBitsByte = 0;
+    const lowBitsBytes: number[] = [];
+    for (let j = 0; j < group.length; j++) {
+      const byte = group[j];
+      const highBit = (byte >> 7) & 1;
+      const lowBits = byte & 0x7f;
+      highBitsByte |= highBit << j;
+      lowBitsBytes.push(lowBits);
+    }
+    result.push(highBitsByte, ...lowBitsBytes);
+  }
+  return result;
+}
+
+export function encodeMonologueParameters(params: MonologueParameters): number[] {
+  const missing: string[] = [];
+  if (!params.isValid) missing.push("isValid=false");
+  if (!params.drive && params.drive !== 0) missing.push("drive");
+  if (!params.oscillators) missing.push("oscillators");
+  if (!params.filter) missing.push("filter");
+  if (!params.envelope) missing.push("envelope");
+  if (!params.lfo) missing.push("lfo");
+  if (!params.sequencer) missing.push("sequencer");
+  if (!params.motionSequencing) missing.push("motionSequencing");
+  if (!params.amp) missing.push("amp");
+  if (!params.misc) missing.push("misc");
+  if (missing.length) throw new Error(`Invalid parameters: missing required sections: [${missing.join(", ")}]`);
+
+  const drive = params.drive!;
+  const { oscillators, filter, envelope, lfo, sequencer, motionSequencing, amp, misc } = params;
+  const data = new Array(448).fill(0);
+  const patchName = params.patchName.padEnd(12, "\0").slice(0, 12);
+  for (let i = 0; i < 12; i++) data[4 + i] = patchName.charCodeAt(i);
+
+  // VCO1
+  data[17] = getHighBits(oscillators!.vco1.shape);
+  data[20] = getHighBits(oscillators!.vco1.level);
+  data[30] = setBits(data[30], oscillators!.vco1.wave, 6, 7);
+  data[30] = packLowerBits(data[30], oscillators!.vco1.shape, 2);
+  // VCO2
+  data[18] = getHighBits(oscillators!.vco2.pitch);
+  data[19] = getHighBits(oscillators!.vco2.shape);
+  data[21] = getHighBits(oscillators!.vco2.level);
+  data[31] = setBits(data[31], oscillators!.vco2.wave, 6, 7);
+  data[31] = setBits(data[31], oscillators!.vco2.octave, 4, 5);
+  data[31] = packLowerBits(data[31], oscillators!.vco2.shape, 2);
+  data[31] = packLowerBits(data[31], oscillators!.vco2.pitch, 0);
+  data[32] = setBits(data[32], oscillators!.vco2.sync, 0, 1);
+  // Filter
+  data[22] = getHighBits(filter!.cutoff);
+  data[23] = getHighBits(filter!.resonance);
+  // Envelope
+  data[24] = getHighBits(envelope!.attack);
+  data[25] = getHighBits(envelope!.decay);
+  data[26] = getHighBits(envelope!.intensity + 512);
+  data[34] = setBits(data[34], envelope!.type, 0, 1);
+  data[34] = packLowerBits(data[34], envelope!.attack, 2);
+  data[34] = packLowerBits(data[34], envelope!.decay, 4);
+  data[34] = setBits(data[34], envelope!.target, 6, 7);
+  // LFO
+  data[27] = getHighBits(lfo!.rate);
+  data[28] = getHighBits(lfo!.intensity + 512);
+  data[36] = setBits(data[36], lfo!.wave, 0, 1);
+  data[36] = setBits(data[36], lfo!.mode, 2, 3);
+  data[36] = setBits(data[36], lfo!.target, 4, 5);
+  // Drive
+  data[29] = getHighBits(drive);
+  // Packed lower bits
+  data[33] = packLowerBits(data[33], oscillators!.vco1.level, 0);
+  data[33] = packLowerBits(data[33], oscillators!.vco2.level, 2);
+  data[33] = packLowerBits(data[33], filter!.cutoff, 4);
+  data[33] = packLowerBits(data[33], filter!.resonance, 6);
+  data[35] = packLowerBits(data[35], envelope!.intensity + 512, 0);
+  data[35] = packLowerBits(data[35], lfo!.rate, 2);
+  data[35] = packLowerBits(data[35], lfo!.intensity + 512, 4);
+  data[35] = packLowerBits(data[35], drive, 6);
+  // Sequencer basic
+  data[54] = sequencer!.stepLength;
+  data[55] = sequencer!.stepResolution;
+  data[56] = sequencer!.swing + 75;
+  for (let i = 0; i < 8; i++) data[64] = setBits(data[64], sequencer!.stepOnOff[i] ? 1 : 0, i, i);
+  for (let i = 0; i < 8; i++) data[65] = setBits(data[65], sequencer!.stepOnOff[i + 8] ? 1 : 0, i, i);
+  for (let i = 0; i < 8; i++) data[66] = setBits(data[66], sequencer!.motionOnOff[i] ? 1 : 0, i, i);
+  for (let i = 0; i < 8; i++) data[67] = setBits(data[67], sequencer!.motionOnOff[i + 8] ? 1 : 0, i, i);
+  // Motion slots
+  for (let slot = 0; slot < 4; slot++) {
+    const s = motionSequencing!.slots[slot];
+    const o = 72 + slot * 2;
+    data[o] = setBits(data[o], s.motionOn ? 1 : 0, 0, 0);
+    data[o] = setBits(data[o], s.smoothOn ? 1 : 0, 1, 1);
+    data[o + 1] = s.parameterId;
+  }
+  for (let slot = 0; slot < 4; slot++) {
+    const s = motionSequencing!.slots[slot];
+    const o = 80 + slot * 2;
+    for (let i = 0; i < 8; i++) data[o] = setBits(data[o], s.stepEnabled[i] ? 1 : 0, i, i);
+    for (let i = 0; i < 8; i++) data[o + 1] = setBits(data[o + 1], s.stepEnabled[i + 8] ? 1 : 0, i, i);
+  }
+  // Step events
+  for (let step = 0; step < 16; step++) {
+    const ev = motionSequencing!.stepEvents[step];
+    const off = 96 + step * 22;
+    data[off + 0] = ev.noteNumber;
+    data[off + 2] = ev.velocity;
+    data[off + 4] = setBits(data[off + 4], ev.gateTime, 0, 6);
+    data[off + 4] = setBits(data[off + 4], ev.triggerSwitch ? 1 : 0, 7, 7);
+    for (let slot = 0; slot < 4; slot++) {
+      const md = ev.motionData[slot];
+      const mo = off + 6 + slot * 4;
+      data[mo + 0] = md.data1;
+      data[mo + 1] = md.data2;
+      data[mo + 2] = md.data3;
+      data[mo + 3] = md.data4;
+    }
+  }
+  // AMP
+  data[16] = amp!.attack;
+  data[17] = amp!.decay; // (Potential overlap with earlier indices retained from original logic)
+  // Misc
+  data[41] = misc!.portamentTime;
+  data[42] = SLIDER_ASSIGN_REVERSE_MATRIX[misc!.sliderAssign] || 23;
+  data[44] = setBits(data[44], misc!.portamentMode ? 1 : 0, 0, 0);
+  data[44] = setBits(data[44], misc!.bpmSync ? 1 : 0, 3, 3);
+  data[44] = setBits(data[44], misc!.cutoffVelocity, 4, 5);
+  data[44] = setBits(data[44], misc!.cutoffKeyTrack, 6, 7);
+
+  const midiData = transformDataFrom8BitTo7Bit(data);
+  const sysexHeader = [0xf0, 0x42, 0x30, 0x00, 0x01, 0x44, 0x40];
+  const sysexTerminator = [0xf7];
+  return [...sysexHeader, ...midiData, ...sysexTerminator];
 }

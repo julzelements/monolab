@@ -44,12 +44,10 @@ export {
 export { parseMonologueSysEx, type MonologueVCFParams } from "./monologue-parser";
 
 // =============================================================================
-// ROUND-TRIP ENCODING (Work in Progress)
+// ROUND-TRIP ENCODING (Unified)
 // =============================================================================
-// Converts MonologueParameters back to SysEx format for perfect round-trip encoding
-// Status: 60% working (3/5 test dumps pass), missing sequencer/motion parameters
-// Note: Requires comprehensive MonologueParameters from decoder.ts
-export { encodeMonologueParameters } from "./encoder-new";
+// Perfect round-trip encoder (decode -> encode -> decode equality) consolidated into encoder.ts
+export { encodeMonologueParameters } from "./encoder";
 
 // =============================================================================
 // UTILITIES
