@@ -5,8 +5,8 @@
  * 1. Low-level 7-bit <-> 8-bit packing/unpacking (groups of 7 data bytes + 1 MSB byte)
  * 2. High-level round-trip parameter encoding (encodeMonologueParameters)
  *
- * This file was consolidated from legacy encoder.ts (transform only) and encoder-new.ts (round-trip
- * parameter encoder). The API surface now exposes both transformation helpers and the full
+ * This file consolidates previous low-level transform logic and the former round-trip encoder implementation.
+ * The API surface now exposes both transformation helpers and the full
  * MonologueParameters -> SysEx encoder in a single place for clarity and maintainability.
  */
 

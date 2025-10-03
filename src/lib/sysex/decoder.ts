@@ -6,7 +6,7 @@
  *
  * Use this decoder when you need:
  * - Complete parameter access beyond VCF controls
- * - Round-trip encoding with encoder-new.ts
+ * - Round-trip encoding with encodeMonologueParameters in encoder.ts
  * - Full MIDI spec compliance
  * - Future feature development requiring additional parameters
  *

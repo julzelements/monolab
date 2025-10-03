@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { encodeMonologueParameters } from "../encoder-new";
+import { encodeMonologueParameters } from "../encoder";
 import { decodeMonologueParameters } from "../decoder";
 import fs from "fs";
 import path from "path";
