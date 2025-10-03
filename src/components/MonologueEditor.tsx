@@ -77,349 +77,346 @@ export function MonologueEditor({ parameters, onParametersChange, className = ""
   }
 
   return (
-    <div className={`space-y-6 ${className}`}>
-      {/* Patch Name */}
-      <div className="p-4 border rounded-lg">
-        <h2 className="text-lg font-semibold mb-4">Patch: {parameters.patchName}</h2>
+    <div className={`w-full max-w-[1200px] mx-auto ${className}`} style={{ height: '900px' }}>
+      {/* Patch Name Header - Compact */}
+      <div className="p-2 border rounded mb-3 text-center">
+        <h2 className="text-lg font-semibold">Patch: {parameters.patchName}</h2>
       </div>
 
-      {/* Drive */}
-      <div className="p-4 border rounded-lg">
-        <h3 className="text-md font-semibold mb-4">Drive</h3>
-        <div className="flex items-center space-x-4">
-          <Knob
-            value={getSafeValue("drive", 0)}
-            onChange={(value) => updateParameter("drive", value)}
-            min={0}
-            max={1023}
-            label="Drive"
-            size={100}
-          />
-        </div>
-      </div>
-
-      {/* VCO Section */}
-      <div className="p-4 border rounded-lg">
-        <h3 className="text-md font-semibold mb-4">Oscillators</h3>
-
-        {/* VCO1 */}
-        <div className="mb-6">
-          <h4 className="text-sm font-medium mb-3 text-gray-700">VCO 1</h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Wave</label>
-              <select
-                value={getSafeValue("oscillators.vco1.wave", 0)}
-                onChange={(e) => updateParameter("oscillators.vco1.wave", parseInt(e.target.value))}
-                className="w-full p-2 border rounded text-sm"
-              >
-                {VCO1_WAVE_TYPES.map((wave, idx) => (
-                  <option key={idx} value={idx}>
-                    {wave}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <Knob
-              value={getSafeValue("oscillators.vco1.shape", 0)}
-              onChange={(value) => updateParameter("oscillators.vco1.shape", value)}
-              min={0}
-              max={1023}
-              label="Shape"
-              size={70}
-            />
-            <Knob
-              value={getSafeValue("oscillators.vco1.level", 0)}
-              onChange={(value) => updateParameter("oscillators.vco1.level", value)}
-              min={0}
-              max={1023}
-              label="Level"
-              size={70}
-            />
-          </div>
-        </div>
-
-        {/* VCO2 */}
-        <div>
-          <h4 className="text-sm font-medium mb-3 text-gray-700">VCO 2</h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Wave</label>
-              <select
-                value={getSafeValue("oscillators.vco2.wave", 0)}
-                onChange={(e) => updateParameter("oscillators.vco2.wave", parseInt(e.target.value))}
-                className="w-full p-2 border rounded text-sm"
-              >
-                {VCO2_WAVE_TYPES.map((wave, idx) => (
-                  <option key={idx} value={idx}>
-                    {wave}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <Knob
-              value={getSafeValue("oscillators.vco2.shape", 0)}
-              onChange={(value) => updateParameter("oscillators.vco2.shape", value)}
-              min={0}
-              max={1023}
-              label="Shape"
-              size={70}
-            />
-            <Knob
-              value={getSafeValue("oscillators.vco2.level", 0)}
-              onChange={(value) => updateParameter("oscillators.vco2.level", value)}
-              min={0}
-              max={1023}
-              label="Level"
-              size={70}
-            />
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Octave</label>
-              <select
-                value={getSafeValue("oscillators.vco2.octave", 0)}
-                onChange={(e) => updateParameter("oscillators.vco2.octave", parseInt(e.target.value))}
-                className="w-full p-2 border rounded text-sm"
-              >
-                {OCTAVE_OPTIONS.map((octave, idx) => (
-                  <option key={idx} value={idx}>
-                    {octave}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <Knob
-              value={getSafeValue("oscillators.vco2.pitch", 0)}
-              onChange={(value) => updateParameter("oscillators.vco2.pitch", value)}
-              min={-512}
-              max={511}
-              label="Pitch"
-              size={70}
-            />
-            <div>
-              <label className="block text-xs font-medium text-gray-600 mb-1">Sync/Ring</label>
-              <select
-                value={getSafeValue("oscillators.vco2.sync", 0)}
-                onChange={(e) => updateParameter("oscillators.vco2.sync", parseInt(e.target.value))}
-                className="w-full p-2 border rounded text-sm"
-              >
-                {SYNC_RING_OPTIONS.map((sync, idx) => (
-                  <option key={idx} value={idx}>
-                    {sync}
-                  </option>
-                ))}
-              </select>
+      {/* Main Grid - 6 Columns */}
+      <div className="grid grid-cols-6 gap-2 h-[calc(100%-60px)]">
+        
+        {/* Column 1: VCO1 */}
+        <div className="space-y-2">
+          <div className="p-2 border rounded">
+            <h3 className="text-xs font-semibold mb-2 text-center">VCO 1</h3>
+            <div className="space-y-2">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Wave</label>
+                <select
+                  value={getSafeValue("oscillators.vco1.wave", 0)}
+                  onChange={(e) => updateParameter("oscillators.vco1.wave", parseInt(e.target.value))}
+                  className="w-full p-1 border rounded text-xs"
+                >
+                  {VCO1_WAVE_TYPES.map((wave, idx) => (
+                    <option key={idx} value={idx}>{wave}</option>
+                  ))}
+                </select>
+              </div>
+              <Knob
+                value={getSafeValue("oscillators.vco1.shape", 0)}
+                onChange={(value) => updateParameter("oscillators.vco1.shape", value)}
+                min={0}
+                max={1023}
+                label="Shape"
+                size={50}
+              />
+              <Knob
+                value={getSafeValue("oscillators.vco1.level", 0)}
+                onChange={(value) => updateParameter("oscillators.vco1.level", value)}
+                min={0}
+                max={1023}
+                label="Level"
+                size={50}
+              />
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Filter Section */}
-      <div className="p-4 border rounded-lg">
-        <h3 className="text-md font-semibold mb-4">Filter</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Knob
-            value={getSafeValue("filter.cutoff", 0)}
-            onChange={(value) => updateParameter("filter.cutoff", value)}
-            min={0}
-            max={1023}
-            label="Cutoff"
-            size={100}
-          />
-          <Knob
-            value={getSafeValue("filter.resonance", 0)}
-            onChange={(value) => updateParameter("filter.resonance", value)}
-            min={0}
-            max={1023}
-            label="Resonance"
-            size={100}
-          />
+        {/* Column 2: VCO2 */}
+        <div className="space-y-2">
+          <div className="p-2 border rounded">
+            <h3 className="text-xs font-semibold mb-2 text-center">VCO 2</h3>
+            <div className="space-y-2">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Wave</label>
+                <select
+                  value={getSafeValue("oscillators.vco2.wave", 0)}
+                  onChange={(e) => updateParameter("oscillators.vco2.wave", parseInt(e.target.value))}
+                  className="w-full p-1 border rounded text-xs"
+                >
+                  {VCO2_WAVE_TYPES.map((wave, idx) => (
+                    <option key={idx} value={idx}>{wave}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Octave</label>
+                <select
+                  value={getSafeValue("oscillators.vco2.octave", 0)}
+                  onChange={(e) => updateParameter("oscillators.vco2.octave", parseInt(e.target.value))}
+                  className="w-full p-1 border rounded text-xs"
+                >
+                  {OCTAVE_OPTIONS.map((octave, idx) => (
+                    <option key={idx} value={idx}>{octave}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Sync</label>
+                <select
+                  value={getSafeValue("oscillators.vco2.sync", 0)}
+                  onChange={(e) => updateParameter("oscillators.vco2.sync", parseInt(e.target.value))}
+                  className="w-full p-1 border rounded text-xs"
+                >
+                  {SYNC_RING_OPTIONS.map((sync, idx) => (
+                    <option key={idx} value={idx}>{sync}</option>
+                  ))}
+                </select>
+              </div>
+              <Knob
+                value={getSafeValue("oscillators.vco2.shape", 0)}
+                onChange={(value) => updateParameter("oscillators.vco2.shape", value)}
+                min={0}
+                max={1023}
+                label="Shape"
+                size={45}
+              />
+              <Knob
+                value={getSafeValue("oscillators.vco2.level", 0)}
+                onChange={(value) => updateParameter("oscillators.vco2.level", value)}
+                min={0}
+                max={1023}
+                label="Level"
+                size={45}
+              />
+              <Knob
+                value={getSafeValue("oscillators.vco2.pitch", 0)}
+                onChange={(value) => updateParameter("oscillators.vco2.pitch", value)}
+                min={-512}
+                max={511}
+                label="Pitch"
+                size={45}
+              />
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* Envelope Section */}
-      <div className="p-4 border rounded-lg">
-        <h3 className="text-md font-semibold mb-4">Envelope</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Type</label>
-            <select
-              value={getSafeValue("envelope.type", 0)}
-              onChange={(e) => updateParameter("envelope.type", parseInt(e.target.value))}
-              className="w-full p-2 border rounded text-sm"
-            >
-              {ENVELOPE_TYPES.map((type, idx) => (
-                <option key={idx} value={idx}>
-                  {type}
-                </option>
-              ))}
-            </select>
+        {/* Column 3: Drive & Filter */}
+        <div className="space-y-2">
+          {/* Drive */}
+          <div className="p-2 border rounded">
+            <h3 className="text-xs font-semibold mb-2 text-center">Drive</h3>
+            <div className="flex justify-center">
+              <Knob
+                value={getSafeValue("drive", 0)}
+                onChange={(value) => updateParameter("drive", value)}
+                min={0}
+                max={1023}
+                label="Drive"
+                size={60}
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Target</label>
-            <select
-              value={getSafeValue("envelope.target", 0)}
-              onChange={(e) => updateParameter("envelope.target", parseInt(e.target.value))}
-              className="w-full p-2 border rounded text-sm"
-            >
-              {EG_TARGET_TYPES.map((target, idx) => (
-                <option key={idx} value={idx}>
-                  {target}
-                </option>
-              ))}
-            </select>
+
+          {/* Filter */}
+          <div className="p-2 border rounded">
+            <h3 className="text-xs font-semibold mb-2 text-center">Filter</h3>
+            <div className="space-y-2">
+              <Knob
+                value={getSafeValue("filter.cutoff", 0)}
+                onChange={(value) => updateParameter("filter.cutoff", value)}
+                min={0}
+                max={1023}
+                label="Cutoff"
+                size={60}
+              />
+              <Knob
+                value={getSafeValue("filter.resonance", 0)}
+                onChange={(value) => updateParameter("filter.resonance", value)}
+                min={0}
+                max={1023}
+                label="Resonance"
+                size={60}
+              />
+            </div>
           </div>
-          <Knob
-            value={getSafeValue("envelope.attack", 0)}
-            onChange={(value) => updateParameter("envelope.attack", value)}
-            min={0}
-            max={1023}
-            label="Attack"
-            size={70}
-          />
-          <Knob
-            value={getSafeValue("envelope.decay", 0)}
-            onChange={(value) => updateParameter("envelope.decay", value)}
-            min={0}
-            max={1023}
-            label="Decay"
-            size={70}
-          />
-          <Knob
-            value={getSafeValue("envelope.intensity", 0)}
-            onChange={(value) => updateParameter("envelope.intensity", value)}
-            min={-512}
-            max={511}
-            label="Intensity"
-            size={70}
-          />
         </div>
-      </div>
 
-      {/* LFO Section */}
-      <div className="p-4 border rounded-lg">
-        <h3 className="text-md font-semibold mb-4">LFO</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Wave</label>
-            <select
-              value={getSafeValue("lfo.wave", 0)}
-              onChange={(e) => updateParameter("lfo.wave", parseInt(e.target.value))}
-              className="w-full p-2 border rounded text-sm"
-            >
-              {LFO_WAVE_TYPES.map((wave, idx) => (
-                <option key={idx} value={idx}>
-                  {wave}
-                </option>
-              ))}
-            </select>
+        {/* Column 4: Envelope */}
+        <div className="space-y-2">
+          <div className="p-2 border rounded h-full">
+            <h3 className="text-xs font-semibold mb-2 text-center">Envelope</h3>
+            <div className="space-y-2">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Type</label>
+                <select
+                  value={getSafeValue("envelope.type", 0)}
+                  onChange={(e) => updateParameter("envelope.type", parseInt(e.target.value))}
+                  className="w-full p-1 border rounded text-xs"
+                >
+                  {ENVELOPE_TYPES.map((type, idx) => (
+                    <option key={idx} value={idx}>{type}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Target</label>
+                <select
+                  value={getSafeValue("envelope.target", 0)}
+                  onChange={(e) => updateParameter("envelope.target", parseInt(e.target.value))}
+                  className="w-full p-1 border rounded text-xs"
+                >
+                  {EG_TARGET_TYPES.map((target, idx) => (
+                    <option key={idx} value={idx}>{target}</option>
+                  ))}
+                </select>
+              </div>
+              <Knob
+                value={getSafeValue("envelope.attack", 0)}
+                onChange={(value) => updateParameter("envelope.attack", value)}
+                min={0}
+                max={1023}
+                label="Attack"
+                size={50}
+              />
+              <Knob
+                value={getSafeValue("envelope.decay", 0)}
+                onChange={(value) => updateParameter("envelope.decay", value)}
+                min={0}
+                max={1023}
+                label="Decay"
+                size={50}
+              />
+              <Knob
+                value={getSafeValue("envelope.intensity", 0)}
+                onChange={(value) => updateParameter("envelope.intensity", value)}
+                min={-512}
+                max={511}
+                label="Intensity"
+                size={50}
+              />
+            </div>
           </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Mode</label>
-            <select
-              value={getSafeValue("lfo.mode", 0)}
-              onChange={(e) => updateParameter("lfo.mode", parseInt(e.target.value))}
-              className="w-full p-2 border rounded text-sm"
-            >
-              {LFO_MODES.map((mode, idx) => (
-                <option key={idx} value={idx}>
-                  {mode}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">Target</label>
-            <select
-              value={getSafeValue("lfo.target", 0)}
-              onChange={(e) => updateParameter("lfo.target", parseInt(e.target.value))}
-              className="w-full p-2 border rounded text-sm"
-            >
-              {LFO_TARGET_TYPES.map((target, idx) => (
-                <option key={idx} value={idx}>
-                  {target}
-                </option>
-              ))}
-            </select>
-          </div>
-          <Knob
-            value={getSafeValue("lfo.rate", 0)}
-            onChange={(value) => updateParameter("lfo.rate", value)}
-            min={0}
-            max={1023}
-            label="Rate"
-            size={70}
-          />
-          <Knob
-            value={getSafeValue("lfo.intensity", 0)}
-            onChange={(value) => updateParameter("lfo.intensity", value)}
-            min={0}
-            max={1023}
-            label="Intensity"
-            size={70}
-          />
         </div>
-      </div>
 
-      {/* AMP Section */}
-      <div className="p-4 border rounded-lg">
-        <h3 className="text-md font-semibold mb-4">AMP</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Knob
-            value={getSafeValue("amp.attack", 0)}
-            onChange={(value) => updateParameter("amp.attack", value)}
-            min={0}
-            max={1023}
-            label="Attack"
-            size={70}
-          />
-          <Knob
-            value={getSafeValue("amp.decay", 0)}
-            onChange={(value) => updateParameter("amp.decay", value)}
-            min={0}
-            max={1023}
-            label="Decay"
-            size={70}
-          />
-        </div>
-      </div>
-
-      {/* Misc Section */}
-      <div className="p-4 border rounded-lg">
-        <h3 className="text-md font-semibold mb-4">Misc</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Knob
-            value={getSafeValue("misc.cutoffKeyTrack", 0)}
-            onChange={(value) => updateParameter("misc.cutoffKeyTrack", value)}
-            min={0}
-            max={3}
-            label="Key Track"
-            size={70}
-          />
-          <Knob
-            value={getSafeValue("misc.portamentTime", 0)}
-            onChange={(value) => updateParameter("misc.portamentTime", value)}
-            min={0}
-            max={127}
-            label="Portamento"
-            size={70}
-          />
-          <div className="flex items-center space-x-2">
-            <label className="text-xs font-medium text-gray-600">BPM Sync</label>
-            <input
-              type="checkbox"
-              checked={getSafeValue("misc.bpmSync", false)}
-              onChange={(e) => updateParameter("misc.bpmSync", e.target.checked)}
-              className="w-4 h-4"
-            />
+        {/* Column 5: LFO */}
+        <div className="space-y-2">
+          <div className="p-2 border rounded h-full">
+            <h3 className="text-xs font-semibold mb-2 text-center">LFO</h3>
+            <div className="space-y-2">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Wave</label>
+                <select
+                  value={getSafeValue("lfo.wave", 0)}
+                  onChange={(e) => updateParameter("lfo.wave", parseInt(e.target.value))}
+                  className="w-full p-1 border rounded text-xs"
+                >
+                  {LFO_WAVE_TYPES.map((wave, idx) => (
+                    <option key={idx} value={idx}>{wave}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Mode</label>
+                <select
+                  value={getSafeValue("lfo.mode", 0)}
+                  onChange={(e) => updateParameter("lfo.mode", parseInt(e.target.value))}
+                  className="w-full p-1 border rounded text-xs"
+                >
+                  {LFO_MODES.map((mode, idx) => (
+                    <option key={idx} value={idx}>{mode}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Target</label>
+                <select
+                  value={getSafeValue("lfo.target", 0)}
+                  onChange={(e) => updateParameter("lfo.target", parseInt(e.target.value))}
+                  className="w-full p-1 border rounded text-xs"
+                >
+                  {LFO_TARGET_TYPES.map((target, idx) => (
+                    <option key={idx} value={idx}>{target}</option>
+                  ))}
+                </select>
+              </div>
+              <Knob
+                value={getSafeValue("lfo.rate", 0)}
+                onChange={(value) => updateParameter("lfo.rate", value)}
+                min={0}
+                max={1023}
+                label="Rate"
+                size={50}
+              />
+              <Knob
+                value={getSafeValue("lfo.intensity", 0)}
+                onChange={(value) => updateParameter("lfo.intensity", value)}
+                min={0}
+                max={1023}
+                label="Intensity"
+                size={50}
+              />
+            </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <label className="text-xs font-medium text-gray-600">Portamento Mode</label>
-            <input
-              type="checkbox"
-              checked={getSafeValue("misc.portamentMode", false)}
-              onChange={(e) => updateParameter("misc.portamentMode", e.target.checked)}
-              className="w-4 h-4"
-            />
+        </div>
+
+        {/* Column 6: AMP & Misc */}
+        <div className="space-y-2">
+          {/* AMP */}
+          <div className="p-2 border rounded">
+            <h3 className="text-xs font-semibold mb-2 text-center">AMP</h3>
+            <div className="space-y-2">
+              <Knob
+                value={getSafeValue("amp.attack", 0)}
+                onChange={(value) => updateParameter("amp.attack", value)}
+                min={0}
+                max={1023}
+                label="Attack"
+                size={45}
+              />
+              <Knob
+                value={getSafeValue("amp.decay", 0)}
+                onChange={(value) => updateParameter("amp.decay", value)}
+                min={0}
+                max={1023}
+                label="Decay"
+                size={45}
+              />
+            </div>
+          </div>
+
+          {/* Misc */}
+          <div className="p-2 border rounded">
+            <h3 className="text-xs font-semibold mb-2 text-center">Misc</h3>
+            <div className="space-y-2">
+              <Knob
+                value={getSafeValue("misc.cutoffKeyTrack", 0)}
+                onChange={(value) => updateParameter("misc.cutoffKeyTrack", value)}
+                min={0}
+                max={3}
+                label="Key Track"
+                size={40}
+              />
+              <Knob
+                value={getSafeValue("misc.portamentTime", 0)}
+                onChange={(value) => updateParameter("misc.portamentTime", value)}
+                min={0}
+                max={127}
+                label="Portamento"
+                size={40}
+              />
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-medium text-gray-600">BPM Sync</label>
+                  <input
+                    type="checkbox"
+                    checked={getSafeValue("misc.bpmSync", false)}
+                    onChange={(e) => updateParameter("misc.bpmSync", e.target.checked)}
+                    className="w-3 h-3"
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-medium text-gray-600">Portamento</label>
+                  <input
+                    type="checkbox"
+                    checked={getSafeValue("misc.portamentMode", false)}
+                    onChange={(e) => updateParameter("misc.portamentMode", e.target.checked)}
+                    className="w-3 h-3"
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
