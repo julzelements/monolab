@@ -2,9 +2,9 @@ import SwitchContainer from "@/components/controlGroups/SwitchContainer";
 import Knob from "@/components/controlGroups/Knob";
 
 import VCO2Octave from "@/components/controlGroups/VCO2Octave";
-import Noise from "@/assets/Noise";
-import Saw from "@/assets/Saw";
-import Triangle from "@/assets/Triangle";
+import Noise from "../assets/Noise";
+import Saw from "../assets/Saw";
+import Triangle from "../assets/Triangle";
 interface VCO2Props {
   octave: number;
   pitch: number;

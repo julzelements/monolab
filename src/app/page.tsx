@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { savePatch } from "@/lib/utils/patch-saving";
-import { MonologueEditor } from "@/components/MonologueEditor";
+import { PanelWithMIDI } from "@/components/PanelWithMIDI";
 import { HardwareDumpHandler } from "@/components/HardwareDumpHandler";
 import { PatchBrowser } from "@/components/PatchBrowser";
 import { MonologueParameters } from "@/lib/sysex/decoder";
@@ -105,7 +105,7 @@ export default function HomePage() {
           <p className="text-gray-600">Complete parameter control for Korg Monologue</p>
         </div>
 
-        <MonologueEditor parameters={currentParameters} onParametersChange={setCurrentParameters} className="mb-8" />
+        <PanelWithMIDI parameters={currentParameters} onParametersChange={setCurrentParameters} className="mb-8" />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Save Controls */}

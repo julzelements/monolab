@@ -1,9 +1,9 @@
-import { ReactElement } from "react";
+import { useState, ReactElement } from "react";
 
 import Switch from "@/components/controlGroups/Switch";
-import Saw from "@/assets/Saw";
-import Square from "@/assets/Square";
-import Triangle from "@/assets/Triangle";
+import Saw from "../assets/Saw";
+import Square from "../assets/Square";
+import Triangle from "../assets/Triangle";
 
 interface WaveProps {
   paramName?: string;
