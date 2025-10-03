@@ -47,10 +47,30 @@ export { parseMonologueSysEx, type MonologueVCFParams } from "./monologue-parser
 // ROUND-TRIP ENCODING (Unified)
 // =============================================================================
 // Perfect round-trip encoder (decode -> encode -> decode equality) consolidated into encoder.ts
-export { encodeMonologueParameters } from "./encoder";
+export {
+  encodeMonologueParameters,
+  validateMonologueParameters,
+  type EncodeValidationResult,
+  safeEncodeMonologueParameters,
+  type SafeEncodeResult,
+} from "./encoder";
 
 // =============================================================================
 // UTILITIES
 // =============================================================================
 // Bit manipulation and data transformation helpers
-export { addLowerBits, getBits, transformDataFrom7BitTo8Bit } from "./utilities";
+export {
+  addLowerBits,
+  getBits,
+  transformDataFrom7BitTo8Bit,
+  getHighBits,
+  getLowBits,
+  setBits,
+  packLowerBits,
+  transformDataFrom8BitTo7Bit,
+} from "./utilities";
+
+// =============================================================================
+// DIFFERENCE & ANALYSIS UTILITIES
+// =============================================================================
+export { diffMonologueParameters, type ParameterDifference } from "./parameter-diff";

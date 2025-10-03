@@ -356,3 +356,31 @@ export function encodeMonologueParameters(params: MonologueParameters): number[]
   const sysexTerminator = [0xf7];
   return [...sysexHeader, ...midiData, ...sysexTerminator];
 }
+
+// ---------------------------------------------------------------------------
+// Safe encode wrapper (non-throwing API)
+// ---------------------------------------------------------------------------
+export type SafeEncodeResult = { ok: true; data: number[] } | { ok: false; error: string; missing?: string[] };
+
+/**
+ * Safely encode Monologue parameters into a SysEx byte array.
+ * Never throws; returns a discriminated union with success or error info.
+ * Uses validateMonologueParameters for structural checks and then executes the
+ * full encode path. Any unexpected runtime errors are captured and surfaced.
+ */
+export function safeEncodeMonologueParameters(params: MonologueParameters): SafeEncodeResult {
+  const validation = validateMonologueParameters(params);
+  if (!validation.valid) {
+    return {
+      ok: false,
+      error: `Invalid parameters: missing required sections`,
+      missing: validation.missing,
+    };
+  }
+  try {
+    const data = encodeMonologueParameters(params);
+    return { ok: true, data };
+  } catch (err: any) {
+    return { ok: false, error: err?.message || String(err) };
+  }
+}
