@@ -5,7 +5,7 @@
  * Optimized for production UI components requiring minimal SysEx parsing.
  *
  * Currently used by:
- * - VCFControls.tsx (cutoff, resonance knobs)
+ * - MonologueEditor.tsx (cutoff, resonance knobs)
  * - SimpleMIDIManager (patch name display)
  *
  * Features:

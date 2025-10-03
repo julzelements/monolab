@@ -24,7 +24,7 @@ Complete encoder/decoder system for Korg Monologue SysEx data with dual-parser a
 - **Purpose**: Lightweight VCF controls + patch names for production UI
 - **Interface**: `MonologueVCFParams` (cutoff, resonance, patch name)
 - **Size**: 90 lines - optimized for minimal footprint
-- **Usage**: Currently used by `VCFControls.tsx` and `SimpleMIDIManager`
+- **Usage**: Currently used by `MonologueEditor` and `SimpleMIDIManager`
 - **Test Status**: ✅ 9/9 tests passing
 
 #### 🎹 Comprehensive Parameter Decoder (`decoder.ts`)
