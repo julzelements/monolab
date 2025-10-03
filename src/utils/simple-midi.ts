@@ -2,7 +2,7 @@
 import { MVPPatch, SimpleMIDIDevice, ParameterChangeEvent, VCF_CC, DeviceSelection } from "@/types/mvp";
 import { parseMonologueSysEx } from "@/lib/sysex";
 import { parameterToMidiCC, midiCCToParameter, parametersToMidiCCs } from "./midi-cc";
-import { MonologueParameters } from "@/lib/sysex/decoder";
+import { MonologueParameters, decodeMonologueParameters } from "@/lib/sysex/decoder";
 
 export class SimpleMIDIManager {
   private static instance: SimpleMIDIManager;
@@ -20,6 +20,9 @@ export class SimpleMIDIManager {
 
   // Simple storage for raw SysEx dumps
   private lastSysExDump: number[] | null = null;
+
+  // NEW: SysEx dump callbacks for complete patch reception
+  private sysexDumpCallbacks: ((data: number[]) => void)[] = [];
 
   private constructor() {}
 
@@ -395,21 +398,47 @@ export class SimpleMIDIManager {
       if (data.length === 520 && data[1] === 0x42 && data[6] === 0x40) {
         console.log("🧪 Attempting to parse as Monologue Current Program Data Dump...");
 
-        // Parse with new SysEx library (converted from example parser)
-        console.log("🔬 Using TypeScript Monologue parser...");
-        const newParsed = parseMonologueSysEx(data);
-        console.log("📊 Parser result:", newParsed);
+        // Parse with comprehensive decoder for complete patch
+        console.log("🔬 Using comprehensive Monologue decoder...");
+        const fullPatch = decodeMonologueParameters(data);
+        console.log("📊 Full patch decoded:", fullPatch);
 
-        // Emit parameter change events if we got valid data
-        if (newParsed.isValid && newParsed.vcf) {
-          console.log("🎛️ Emitting VCF parameter updates from SysEx...");
+        // NEW: Emit complete patch data to SysEx dump listeners
+        if (fullPatch.isValid) {
+          console.log("🎹 Complete patch received from hardware!");
+          console.log(`📝 Patch name: "${fullPatch.patchName}"`);
+
+          // Notify SysEx dump listeners with complete patch
+          this.sysexDumpCallbacks.forEach((callback) => {
+            try {
+              callback(data);
+            } catch (error) {
+              console.error("❌ SysEx dump callback error:", error);
+            }
+          });
+
+          // Also emit a patch event with the parsed parameters
+          this.emit("hardwarePatchReceived", {
+            sysexData: data,
+            parameters: fullPatch,
+            timestamp: Date.now(),
+            source: "hardware",
+          });
+        } else {
+          console.error("❌ Failed to decode complete patch:", fullPatch.error);
+        }
+
+        // Legacy: Parse with old VCF-only parser for backward compatibility
+        const legacyParsed = parseMonologueSysEx(data);
+        if (legacyParsed.isValid && legacyParsed.vcf) {
+          console.log("🎛️ Emitting legacy VCF parameter updates from SysEx...");
 
           // Emit cutoff change
           this.emit("parameterChange", {
             parameterId: "cutoff",
-            value: newParsed.vcf.cutoff,
-            normalized: newParsed.vcf.cutoff / 1023,
-            ccValue: Math.round((newParsed.vcf.cutoff / 1023) * 127),
+            value: legacyParsed.vcf.cutoff,
+            normalized: legacyParsed.vcf.cutoff / 1023,
+            ccValue: Math.round((legacyParsed.vcf.cutoff / 1023) * 127),
             source: "sysex",
             timestamp: Date.now(),
           });
@@ -417,14 +446,16 @@ export class SimpleMIDIManager {
           // Emit resonance change
           this.emit("parameterChange", {
             parameterId: "resonance",
-            value: newParsed.vcf.resonance,
-            normalized: newParsed.vcf.resonance / 1023,
-            ccValue: Math.round((newParsed.vcf.resonance / 1023) * 127),
+            value: legacyParsed.vcf.resonance,
+            normalized: legacyParsed.vcf.resonance / 1023,
+            ccValue: Math.round((legacyParsed.vcf.resonance / 1023) * 127),
             source: "sysex",
             timestamp: Date.now(),
           });
 
-          console.log(`✅ Updated VCF: Cutoff=${newParsed.vcf.cutoff}/1023, Resonance=${newParsed.vcf.resonance}/1023`);
+          console.log(
+            `✅ Updated VCF: Cutoff=${legacyParsed.vcf.cutoff}/1023, Resonance=${legacyParsed.vcf.resonance}/1023`
+          );
         }
       }
     }
@@ -826,6 +857,20 @@ export class SimpleMIDIManager {
       if (index > -1) {
         eventListeners.splice(index, 1);
       }
+    }
+  }
+
+  // NEW: SysEx dump listener management
+  onSysExDump(callback: (data: number[]) => void) {
+    this.sysexDumpCallbacks.push(callback);
+    this.debugLog("SYSEX", "Added SysEx dump listener");
+  }
+
+  offSysExDump(callback: (data: number[]) => void) {
+    const index = this.sysexDumpCallbacks.indexOf(callback);
+    if (index > -1) {
+      this.sysexDumpCallbacks.splice(index, 1);
+      this.debugLog("SYSEX", "Removed SysEx dump listener");
     }
   }
 
