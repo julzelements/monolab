@@ -279,8 +279,8 @@ export class SimpleMIDIManager {
       const recentTimestamp = this.recentOutgoingMessages.get(messageKey);
       const now = Date.now();
 
-      if (recentTimestamp && now - recentTimestamp < 100) {
-        // This is likely feedback from our own message, ignore it
+      if (recentTimestamp && now - recentTimestamp < 25) {
+        // This is likely feedback from our own message, ignore it (reduced from 100ms to 25ms)
         this.debugLog("CONTROL_CHANGE", `Ignoring feedback from recent outgoing CC${ccNumber} = ${value}`);
         this.recentOutgoingMessages.delete(messageKey); // Clean up
         return;

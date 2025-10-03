@@ -36,15 +36,37 @@ const OCTAVE_OPTIONS = ["16'", "8'", "4'", "2'"];
 export function MonologueEditor({ parameters, onParametersChange, className = "" }: MonologueEditorProps) {
   const [midiManager] = useState(() => SimpleMIDIManager.getInstance());
   const [isMidiInitialized, setIsMidiInitialized] = useState(false);
+  const [debugMode, setDebugMode] = useState(false);
 
-  // Initialize MIDI and set up parameter change listener
+  // Use refs to avoid dependency issues and prevent infinite loops
+  const parametersRef = useRef(parameters);
+  const onParametersChangeRef = useRef(onParametersChange);
+  const isUpdatingFromMidiRef = useRef(false);
+
+  // Update refs when props change
   useEffect(() => {
-    const initMIDI = async () => {
-      const success = await midiManager.initialize();
-      setIsMidiInitialized(success);
+    parametersRef.current = parameters;
+    onParametersChangeRef.current = onParametersChange;
+  }, [parameters, onParametersChange]);
 
-      if (success) {
-        console.log("🎹 MIDI initialized successfully for MonologueEditor");
+  // Initialize MIDI ONCE and set up parameter change listener
+  useEffect(() => {
+    console.log("🚀 Initializing MIDI for MonologueEditor...");
+
+    const initMIDI = async () => {
+      try {
+        const success = await midiManager.initialize();
+        setIsMidiInitialized(success);
+
+        if (success) {
+          console.log("✅ MIDI initialized successfully for MonologueEditor");
+          // Enable debug mode for troubleshooting
+          midiManager.setDebugMode(true, false);
+        } else {
+          console.warn("⚠️ MIDI initialization failed");
+        }
+      } catch (error) {
+        console.error("❌ MIDI initialization error:", error);
       }
     };
 
@@ -52,12 +74,58 @@ export function MonologueEditor({ parameters, onParametersChange, className = ""
 
     // Listen for incoming MIDI parameter changes
     const handleMidiParameterChange = (event: any) => {
-      const { parameter, value } = event;
-      console.log(`🎛️ Received MIDI CC change: ${parameter} = ${value}`);
+      try {
+        const { parameter, value, source = "hardware" } = event;
 
-      // Update the parameters using the same logic as manual changes
-      const pathParts = parameter.split(".");
+        console.log(`🎛️ Received MIDI CC change: ${parameter} = ${value} (source: ${source})`);
+
+        // Set flag to prevent sending MIDI back out temporarily
+        isUpdatingFromMidiRef.current = true;
+
+        // Update the parameters using current parameters from ref
+        const currentParams = parametersRef.current;
+        const pathParts = parameter.split(".");
+        const updated = { ...currentParams };
+        let current: any = updated;
+
+        // Navigate to the parent object
+        for (let i = 0; i < pathParts.length - 1; i++) {
+          if (!current[pathParts[i]]) {
+            current[pathParts[i]] = {};
+          }
+          current = current[pathParts[i]];
+        }
+
+        // Set the final value
+        current[pathParts[pathParts.length - 1]] = value;
+
+        // Call the parameter change handler
+        onParametersChangeRef.current(updated);
+
+        // Reset flag immediately after state update (much faster than 50ms timeout)
+        requestAnimationFrame(() => {
+          isUpdatingFromMidiRef.current = false;
+        });
+      } catch (error) {
+        console.error("❌ Error handling MIDI parameter change:", error);
+        isUpdatingFromMidiRef.current = false;
+      }
+    };
+
+    midiManager.on("monologueParameterChange", handleMidiParameterChange);
+
+    return () => {
+      console.log("🧹 Cleaning up MIDI listeners");
+      midiManager.off("monologueParameterChange", handleMidiParameterChange);
+    };
+  }, [midiManager]); // Only depend on midiManager, not parameters!
+
+  const updateParameter = (path: string, value: any) => {
+    // Prevent sending MIDI if we're currently updating from MIDI
+    if (isUpdatingFromMidiRef.current) {
+      console.log("🔄 Skipping MIDI send - currently updating from MIDI");
       const updated = { ...parameters };
+      const pathParts = path.split(".");
       let current: any = updated;
 
       // Navigate to the parent object
@@ -71,16 +139,9 @@ export function MonologueEditor({ parameters, onParametersChange, className = ""
       // Set the final value
       current[pathParts[pathParts.length - 1]] = value;
       onParametersChange(updated);
-    };
+      return;
+    }
 
-    midiManager.on("monologueParameterChange", handleMidiParameterChange);
-
-    return () => {
-      midiManager.off("monologueParameterChange", handleMidiParameterChange);
-    };
-  }, [midiManager, parameters, onParametersChange]);
-
-  const updateParameter = (path: string, value: any) => {
     const updated = { ...parameters };
     const pathParts = path.split(".");
     let current: any = updated;
@@ -98,8 +159,9 @@ export function MonologueEditor({ parameters, onParametersChange, className = ""
 
     onParametersChange(updated);
 
-    // Send MIDI CC if MIDI is initialized and connected
-    if (isMidiInitialized) {
+    // Send MIDI CC if MIDI is initialized and connected (and not updating from MIDI)
+    if (isMidiInitialized && !isUpdatingFromMidiRef.current) {
+      console.log(`📤 Sending MIDI CC for ${path} = ${value}`);
       midiManager.sendMonologueParameterChange(path, value).catch((error) => {
         console.warn(`Failed to send MIDI CC for ${path}:`, error);
       });
