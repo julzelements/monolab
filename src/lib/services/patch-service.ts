@@ -86,7 +86,7 @@ export class PatchService {
   static async listPatches(limit: number = 50) {
     const patches = await prisma.patch.findMany({
       where: { deletedAt: null } as any,
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: "desc" },
       take: limit,
       select: {
         id: true,
@@ -96,7 +96,7 @@ export class PatchService {
         createdAt: true,
         isPublic: true,
         parameters: true,
-      }
+      },
     });
     return patches;
   }

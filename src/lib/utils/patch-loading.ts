@@ -19,12 +19,12 @@ export async function fetchPatches(limit: number = 50): Promise<PatchSummary[]> 
   if (!response.ok) {
     throw new Error(`Failed to fetch patches: ${response.statusText}`);
   }
-  
+
   const result = await response.json();
   if (!result.success) {
-    throw new Error(result.error || 'Failed to fetch patches');
+    throw new Error(result.error || "Failed to fetch patches");
   }
-  
+
   return result.data;
 }
 
@@ -33,11 +33,11 @@ export async function fetchPatch(id: string): Promise<PatchDetail> {
   if (!response.ok) {
     throw new Error(`Failed to fetch patch: ${response.statusText}`);
   }
-  
+
   const result = await response.json();
   if (!result.success) {
-    throw new Error(result.error || 'Failed to fetch patch');
+    throw new Error(result.error || "Failed to fetch patch");
   }
-  
+
   return result.data;
 }

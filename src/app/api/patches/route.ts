@@ -5,8 +5,8 @@ import { PatchService } from "@/lib/services/patch-service";
 export async function GET(req: NextRequest) {
   try {
     const url = new URL(req.url);
-    const limit = parseInt(url.searchParams.get('limit') || '50');
-    
+    const limit = parseInt(url.searchParams.get("limit") || "50");
+
     const patches = await PatchService.listPatches(limit);
     return NextResponse.json({ success: true, data: patches });
   } catch (e: any) {

@@ -5,21 +5,21 @@ import { decodeMonologueParameters } from "@/lib/sysex";
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const patch = await PatchService.getPatch(params.id);
-    
+
     // Decode the sysex data to parameters if needed
     let parameters = patch.parameters;
     if (!parameters && patch.sysexData) {
       const sysexArray = Array.from(patch.sysexData);
       parameters = decodeMonologueParameters(sysexArray) as any;
     }
-    
-    return NextResponse.json({ 
-      success: true, 
+
+    return NextResponse.json({
+      success: true,
       data: {
         ...patch,
         parameters,
-        sysexData: Array.from(patch.sysexData) // Convert buffer to array for JSON
-      }
+        sysexData: Array.from(patch.sysexData), // Convert buffer to array for JSON
+      },
     });
   } catch (e: any) {
     const status = e?.message === "Patch not found" ? 404 : 500;
