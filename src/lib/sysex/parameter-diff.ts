@@ -1,4 +1,4 @@
-import { MonologueParameters } from './decoder';
+import { MonologueParameters } from "./decoder";
 
 export interface ParameterDifference {
   path: string;
@@ -14,14 +14,18 @@ export interface DiffOptions {
 }
 
 function isObject(val: any) {
-  return val !== null && typeof val === 'object' && !Array.isArray(val);
+  return val !== null && typeof val === "object" && !Array.isArray(val);
 }
 
 function buildPath(parent: string, key: string | number) {
   return parent ? `${parent}.${key}` : String(key);
 }
 
-export function diffMonologueParameters(a: MonologueParameters, b: MonologueParameters, options: DiffOptions = {}): ParameterDifference[] {
+export function diffMonologueParameters(
+  a: MonologueParameters,
+  b: MonologueParameters,
+  options: DiffOptions = {}
+): ParameterDifference[] {
   const diffs: ParameterDifference[] = [];
   const { includeUnchanged = false, maxDepth } = options;
 
@@ -29,7 +33,7 @@ export function diffMonologueParameters(a: MonologueParameters, b: MonologuePara
     if (maxDepth !== undefined && depth > maxDepth) return;
     // Identical (using strict equality for primitives & reference check for objects)
     if (av === bv) {
-      if (includeUnchanged && (typeof av !== 'object' || av === null)) {
+      if (includeUnchanged && (typeof av !== "object" || av === null)) {
         diffs.push({ path, before: av, after: bv });
       }
       return;
@@ -50,6 +54,6 @@ export function diffMonologueParameters(a: MonologueParameters, b: MonologuePara
     }
   }
 
-  walk(a, b, '', 0);
+  walk(a, b, "", 0);
   return diffs;
 }

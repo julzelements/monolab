@@ -76,9 +76,13 @@ export function transformDataFrom7BitTo8Bit(records: number[]): number[] {
 // ---------------------------------------------------------------------------
 
 /** Extract the high 8 bits from a 10-bit value */
-export function getHighBits(value10bit: number): number { return (value10bit >> 2) & 0xff; }
+export function getHighBits(value10bit: number): number {
+  return (value10bit >> 2) & 0xff;
+}
 /** Extract the low 2 bits from a 10-bit value */
-export function getLowBits(value10bit: number): number { return value10bit & 0x03; }
+export function getLowBits(value10bit: number): number {
+  return value10bit & 0x03;
+}
 /** Set specific bits (inclusive start/end, 0 = LSB) */
 export function setBits(targetByte: number, value: number, startBit: number, endBit: number): number {
   const bitCount = endBit - startBit + 1;

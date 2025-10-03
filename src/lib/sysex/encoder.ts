@@ -187,7 +187,16 @@ export function is8BitSafe(data: number[]): boolean {
 // ---------------------------------------------------------------------------
 // High-level round-trip parameter encoder (merged from encoder-new.ts)
 // ---------------------------------------------------------------------------
-import { addLowerBits, getBits, transformDataFrom7BitTo8Bit, getHighBits, getLowBits, setBits, packLowerBits, transformDataFrom8BitTo7Bit } from "./utilities"; // getBits used by tests elsewhere
+import {
+  addLowerBits,
+  getBits,
+  transformDataFrom7BitTo8Bit,
+  getHighBits,
+  getLowBits,
+  setBits,
+  packLowerBits,
+  transformDataFrom8BitTo7Bit,
+} from "./utilities"; // getBits used by tests elsewhere
 import { MonologueParameters } from "./decoder";
 
 const SLIDER_ASSIGN_REVERSE_MATRIX: { [key: string]: number } = {
@@ -231,7 +240,11 @@ export function validateMonologueParameters(params: MonologueParameters): Encode
   if (!params.motionSequencing) missing.push("motionSequencing");
   if (!params.amp) missing.push("amp");
   if (!params.misc) missing.push("misc");
-  return { valid: missing.length === 0, missing, error: missing.length ? `Missing sections: ${missing.join(", ")}` : undefined };
+  return {
+    valid: missing.length === 0,
+    missing,
+    error: missing.length ? `Missing sections: ${missing.join(", ")}` : undefined,
+  };
 }
 
 export function encodeMonologueParameters(params: MonologueParameters): number[] {
