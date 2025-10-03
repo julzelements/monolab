@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { MonologueParameters } from "@/lib/sysex/decoder";
 import { Knob } from "./ui/knob";
 import { Slider } from "./ui/slider";
+import { SimpleMIDIManager } from "@/utils/simple-midi";
 
 interface MonologueEditorProps {
   parameters: MonologueParameters;
@@ -33,6 +34,52 @@ const SYNC_RING_OPTIONS = ["RING", "OFF", "SYNC"];
 const OCTAVE_OPTIONS = ["16'", "8'", "4'", "2'"];
 
 export function MonologueEditor({ parameters, onParametersChange, className = "" }: MonologueEditorProps) {
+  const [midiManager] = useState(() => SimpleMIDIManager.getInstance());
+  const [isMidiInitialized, setIsMidiInitialized] = useState(false);
+
+  // Initialize MIDI and set up parameter change listener
+  useEffect(() => {
+    const initMIDI = async () => {
+      const success = await midiManager.initialize();
+      setIsMidiInitialized(success);
+
+      if (success) {
+        console.log("🎹 MIDI initialized successfully for MonologueEditor");
+      }
+    };
+
+    initMIDI();
+
+    // Listen for incoming MIDI parameter changes
+    const handleMidiParameterChange = (event: any) => {
+      const { parameter, value } = event;
+      console.log(`🎛️ Received MIDI CC change: ${parameter} = ${value}`);
+
+      // Update the parameters using the same logic as manual changes
+      const pathParts = parameter.split(".");
+      const updated = { ...parameters };
+      let current: any = updated;
+
+      // Navigate to the parent object
+      for (let i = 0; i < pathParts.length - 1; i++) {
+        if (!current[pathParts[i]]) {
+          current[pathParts[i]] = {};
+        }
+        current = current[pathParts[i]];
+      }
+
+      // Set the final value
+      current[pathParts[pathParts.length - 1]] = value;
+      onParametersChange(updated);
+    };
+
+    midiManager.on("monologueParameterChange", handleMidiParameterChange);
+
+    return () => {
+      midiManager.off("monologueParameterChange", handleMidiParameterChange);
+    };
+  }, [midiManager, parameters, onParametersChange]);
+
   const updateParameter = (path: string, value: any) => {
     const updated = { ...parameters };
     const pathParts = path.split(".");
@@ -50,6 +97,13 @@ export function MonologueEditor({ parameters, onParametersChange, className = ""
     current[pathParts[pathParts.length - 1]] = value;
 
     onParametersChange(updated);
+
+    // Send MIDI CC if MIDI is initialized and connected
+    if (isMidiInitialized) {
+      midiManager.sendMonologueParameterChange(path, value).catch((error) => {
+        console.warn(`Failed to send MIDI CC for ${path}:`, error);
+      });
+    }
   };
 
   const getSafeValue = (path: string, fallback: any = 0): any => {

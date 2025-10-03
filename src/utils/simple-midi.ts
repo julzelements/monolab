@@ -1,6 +1,8 @@
 // MVP MIDI utilities - simplified for cutoff and resonance only
 import { MVPPatch, SimpleMIDIDevice, ParameterChangeEvent, VCF_CC, DeviceSelection } from "@/types/mvp";
 import { parseMonologueSysEx } from "@/lib/sysex";
+import { parameterToMidiCC, midiCCToParameter, parametersToMidiCCs } from "./midi-cc";
+import { MonologueParameters } from "@/lib/sysex/decoder";
 
 export class SimpleMIDIManager {
   private static instance: SimpleMIDIManager;
@@ -272,32 +274,56 @@ export class SimpleMIDIManager {
         parameterName: this.getCCParameterName(ccNumber),
       });
 
-      let parameter: "cutoff" | "resonance" | null = null;
-      if (ccNumber === VCF_CC.CUTOFF) parameter = "cutoff";
-      else if (ccNumber === VCF_CC.RESONANCE) parameter = "resonance";
+      // Check if this is feedback from our own outgoing message
+      const messageKey = `${ccNumber}:${value}`;
+      const recentTimestamp = this.recentOutgoingMessages.get(messageKey);
+      const now = Date.now();
 
-      if (parameter) {
-        // Check if this is feedback from our own outgoing message
-        const messageKey = `${ccNumber}:${value}`;
-        const recentTimestamp = this.recentOutgoingMessages.get(messageKey);
-        const now = Date.now();
+      if (recentTimestamp && now - recentTimestamp < 100) {
+        // This is likely feedback from our own message, ignore it
+        this.debugLog("CONTROL_CHANGE", `Ignoring feedback from recent outgoing CC${ccNumber} = ${value}`);
+        this.recentOutgoingMessages.delete(messageKey); // Clean up
+        return;
+      }
 
-        if (recentTimestamp && now - recentTimestamp < 100) {
-          // This is likely feedback from our own message, ignore it
-          this.debugLog("CONTROL_CHANGE", `Ignoring feedback from recent outgoing CC${ccNumber} = ${value}`);
-          this.recentOutgoingMessages.delete(messageKey); // Clean up
-          return;
-        }
+      // NEW: Comprehensive MIDI CC parameter mapping
+      const paramMapping = midiCCToParameter(ccNumber, value);
+      if (paramMapping) {
+        const { parameter, value: paramValue } = paramMapping;
 
-        const event: ParameterChangeEvent = {
+        this.debugLog("CONTROL_CHANGE", `Mapped CC${ccNumber} to ${parameter} = ${paramValue}`, {
+          ccNumber,
+          midiValue: value,
           parameter,
-          value,
+          parameterValue: paramValue,
+        });
+
+        // Emit parameter change event for the new comprehensive system
+        this.emit("monologueParameterChange", {
+          parameter,
+          value: paramValue,
+          ccNumber,
+          midiValue: value,
           source: "hardware",
-        };
-        this.debugLog("CONTROL_CHANGE", `Mapped to ${parameter} parameter`, event);
-        this.emit("parameterChange", event);
+          timestamp: now,
+        });
       } else {
-        this.debugLog("CONTROL_CHANGE", `Unmapped CC${ccNumber} (not tracked in MVP)`);
+        // Fallback to legacy MVP parameter handling for cutoff/resonance
+        let parameter: "cutoff" | "resonance" | null = null;
+        if (ccNumber === VCF_CC.CUTOFF) parameter = "cutoff";
+        else if (ccNumber === VCF_CC.RESONANCE) parameter = "resonance";
+
+        if (parameter) {
+          const event: ParameterChangeEvent = {
+            parameter,
+            value,
+            source: "hardware",
+          };
+          this.debugLog("CONTROL_CHANGE", `Mapped to ${parameter} parameter (legacy)`, event);
+          this.emit("parameterChange", event);
+        } else {
+          this.debugLog("CONTROL_CHANGE", `Unmapped CC${ccNumber} (not supported)`);
+        }
       }
     }
     // Check for Program Change messages (0xC0-0xCF)
@@ -552,6 +578,103 @@ export class SimpleMIDIManager {
     } catch (error) {
       this.debugLog("ERROR", "Failed to send parameter change", error);
       console.error("Failed to send parameter change:", error);
+      return false;
+    }
+  }
+
+  // NEW: Comprehensive parameter change support for all Monologue parameters
+  async sendMonologueParameterChange(parameter: string, value: number): Promise<boolean> {
+    if (!this.monologueOutput) {
+      this.debugLog("WARNING", "Cannot send parameter change - no Monologue output connected");
+      console.warn("No Monologue output connected");
+      return false;
+    }
+
+    try {
+      const ccMapping = parameterToMidiCC(parameter, value);
+      if (!ccMapping) {
+        this.debugLog("WARNING", `Parameter '${parameter}' does not support MIDI CC transmission`);
+        return false;
+      }
+
+      const { cc, midiValue } = ccMapping;
+      const clampedValue = Math.max(0, Math.min(127, midiValue));
+
+      // Send Control Change message: [status, cc_number, value]
+      const message = [0xb0, cc, clampedValue]; // Channel 1
+
+      this.debugLog("OUTGOING_MSG", `Sending ${parameter} change`, {
+        parameter,
+        ccNumber: cc,
+        value: clampedValue,
+        originalValue: value,
+        message,
+        hex: message.map((b) => "0x" + b.toString(16).padStart(2, "0")).join(" "),
+      });
+
+      // Track this outgoing message to prevent feedback loops
+      const messageKey = `${cc}:${clampedValue}`;
+      this.recentOutgoingMessages.set(messageKey, Date.now());
+
+      this.monologueOutput.send(message);
+
+      this.debugLog("OUTGOING_MSG", `Successfully sent CC${cc} = ${clampedValue} for ${parameter}`);
+
+      // Clean up old outgoing message tracking to prevent memory leaks
+      this.cleanupOldOutgoingMessages();
+
+      return true;
+    } catch (error) {
+      this.debugLog("ERROR", "Failed to send parameter change", error);
+      console.error("Failed to send parameter change:", error);
+      return false;
+    }
+  }
+
+  // NEW: Send multiple parameter changes at once
+  async sendMultipleParameterChanges(parameters: Partial<MonologueParameters>): Promise<boolean> {
+    if (!this.monologueOutput) {
+      this.debugLog("WARNING", "Cannot send parameter changes - no Monologue output connected");
+      console.warn("No Monologue output connected");
+      return false;
+    }
+
+    try {
+      const ccMappings = parametersToMidiCCs(parameters);
+
+      if (ccMappings.length === 0) {
+        this.debugLog("WARNING", "No parameters support MIDI CC transmission");
+        return false;
+      }
+
+      let successCount = 0;
+      for (const { cc, midiValue, parameter } of ccMappings) {
+        const clampedValue = Math.max(0, Math.min(127, midiValue));
+        const message = [0xb0, cc, clampedValue]; // Channel 1
+
+        try {
+          // Track this outgoing message to prevent feedback loops
+          const messageKey = `${cc}:${clampedValue}`;
+          this.recentOutgoingMessages.set(messageKey, Date.now());
+
+          this.monologueOutput.send(message);
+          successCount++;
+
+          this.debugLog("OUTGOING_MSG", `Sent CC${cc} = ${clampedValue} for ${parameter}`);
+        } catch (error) {
+          this.debugLog("ERROR", `Failed to send CC for ${parameter}`, error);
+        }
+      }
+
+      this.debugLog("OUTGOING_MSG", `Successfully sent ${successCount}/${ccMappings.length} parameter changes`);
+
+      // Clean up old outgoing message tracking to prevent memory leaks
+      this.cleanupOldOutgoingMessages();
+
+      return successCount > 0;
+    } catch (error) {
+      this.debugLog("ERROR", "Failed to send multiple parameter changes", error);
+      console.error("Failed to send multiple parameter changes:", error);
       return false;
     }
   }
