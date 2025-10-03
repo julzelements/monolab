@@ -87,8 +87,19 @@ export default function HomePage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-6xl mx-auto">
+    <div className="container mx-auto px-4 py-8 relative min-h-screen">
+      {/* Background Reference Image */}
+      <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-0">
+        <img
+          src="/monologue-panel-layout.png"
+          alt="Monologue Panel Reference"
+          className="max-w-full max-h-full object-contain opacity-25"
+          style={{ maxWidth: "80vw", maxHeight: "80vh" }}
+        />
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-6xl mx-auto relative z-10">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Monologue Editor</h1>
           <p className="text-gray-600">Complete parameter control for Korg Monologue</p>
