@@ -82,4 +82,30 @@ export class PatchService {
     }
     await prisma.patch.update({ where: { id }, data: { deletedAt: new Date() } as any });
   }
+
+  static async listPatches(limit: number = 50) {
+    const patches = await prisma.patch.findMany({
+      where: { deletedAt: null } as any,
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        authorName: true,
+        createdAt: true,
+        isPublic: true,
+        parameters: true,
+      }
+    });
+    return patches;
+  }
+
+  static async getPatch(id: string) {
+    const patch = await prisma.patch.findFirst({
+      where: { id, deletedAt: null } as any,
+    });
+    if (!patch) throw new Error("Patch not found");
+    return patch;
+  }
 }

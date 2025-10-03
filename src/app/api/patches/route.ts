@@ -1,6 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PatchService } from "@/lib/services/patch-service";
 
+// GET /api/patches - list patches
+export async function GET(req: NextRequest) {
+  try {
+    const url = new URL(req.url);
+    const limit = parseInt(url.searchParams.get('limit') || '50');
+    
+    const patches = await PatchService.listPatches(limit);
+    return NextResponse.json({ success: true, data: patches });
+  } catch (e: any) {
+    return NextResponse.json({ success: false, error: e?.message || "Unknown error" }, { status: 500 });
+  }
+}
+
 // Simple POST /api/patches expecting JSON: { sysex: number[] | base64 string, name?, isPublic?, description?, tags? }
 export async function POST(req: NextRequest) {
   try {
