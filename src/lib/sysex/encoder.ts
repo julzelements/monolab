@@ -187,7 +187,7 @@ export function is8BitSafe(data: number[]): boolean {
 // ---------------------------------------------------------------------------
 // High-level round-trip parameter encoder (merged from encoder-new.ts)
 // ---------------------------------------------------------------------------
-import { addLowerBits, getBits, transformDataFrom7BitTo8Bit } from "./utilities"; // getBits used by tests elsewhere
+import { addLowerBits, getBits, transformDataFrom7BitTo8Bit, getHighBits, getLowBits, setBits, packLowerBits, transformDataFrom8BitTo7Bit } from "./utilities"; // getBits used by tests elsewhere
 import { MonologueParameters } from "./decoder";
 
 const SLIDER_ASSIGN_REVERSE_MATRIX: { [key: string]: number } = {
@@ -208,40 +208,18 @@ const SLIDER_ASSIGN_REVERSE_MATRIX: { [key: string]: number } = {
   "GATE TIME": 57,
 };
 
-function getHighBits(value10bit: number): number {
-  return (value10bit >> 2) & 0xff;
-}
-function getLowBits(value10bit: number): number {
-  return value10bit & 0x03;
-}
-function setBits(targetByte: number, value: number, startBit: number, endBit: number): number {
-  const bitCount = endBit - startBit + 1;
-  const mask = ((1 << bitCount) - 1) << startBit;
-  return (targetByte & ~mask) | ((value & ((1 << bitCount) - 1)) << startBit);
-}
-function packLowerBits(targetByte: number, value10bit: number, offset: number): number {
-  const lowBits = getLowBits(value10bit);
-  return setBits(targetByte, lowBits, offset, offset + 1);
-}
-function transformDataFrom8BitTo7Bit(data8bit: number[]): number[] {
-  const result: number[] = [];
-  for (let i = 0; i < data8bit.length; i += 7) {
-    const group = data8bit.slice(i, i + 7);
-    let highBitsByte = 0;
-    const lowBitsBytes: number[] = [];
-    for (let j = 0; j < group.length; j++) {
-      const byte = group[j];
-      const highBit = (byte >> 7) & 1;
-      const lowBits = byte & 0x7f;
-      highBitsByte |= highBit << j;
-      lowBitsBytes.push(lowBits);
-    }
-    result.push(highBitsByte, ...lowBitsBytes);
-  }
-  return result;
+// Helper definitions moved to utilities.ts
+
+// ---------------------------------------------------------------------------
+// Validation helper (non-throwing) exported for external preflight checks
+// ---------------------------------------------------------------------------
+export interface EncodeValidationResult {
+  valid: boolean;
+  missing: string[];
+  error?: string;
 }
 
-export function encodeMonologueParameters(params: MonologueParameters): number[] {
+export function validateMonologueParameters(params: MonologueParameters): EncodeValidationResult {
   const missing: string[] = [];
   if (!params.isValid) missing.push("isValid=false");
   if (!params.drive && params.drive !== 0) missing.push("drive");
@@ -253,7 +231,14 @@ export function encodeMonologueParameters(params: MonologueParameters): number[]
   if (!params.motionSequencing) missing.push("motionSequencing");
   if (!params.amp) missing.push("amp");
   if (!params.misc) missing.push("misc");
-  if (missing.length) throw new Error(`Invalid parameters: missing required sections: [${missing.join(", ")}]`);
+  return { valid: missing.length === 0, missing, error: missing.length ? `Missing sections: ${missing.join(", ")}` : undefined };
+}
+
+export function encodeMonologueParameters(params: MonologueParameters): number[] {
+  const validation = validateMonologueParameters(params);
+  if (!validation.valid) {
+    throw new Error(`Invalid parameters: missing required sections: [${validation.missing.join(", ")}]`);
+  }
 
   const drive = params.drive!;
   const { oscillators, filter, envelope, lfo, sequencer, motionSequencing, amp, misc } = params;

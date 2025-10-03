@@ -13,7 +13,7 @@ Complete encoder/decoder system for Korg Monologue SysEx data with dual-parser a
 
 ### Core Components
 
-#### 🔧 Low-Level Transformation (`encoder.ts`, `utilities.ts`)
+#### 🔧 Low-Level Transformation & Round-Trip (`encoder.ts`, `utilities.ts`)
 
 - **7↔8 bit transformation** for MIDI SysEx format conversion
 - Bit manipulation utilities for high-bit packing/unpacking
@@ -35,12 +35,16 @@ Complete encoder/decoder system for Korg Monologue SysEx data with dual-parser a
 - **Usage**: Foundation for round-trip encoding and future development
 - **Test Status**: ✅ 8/8 tests passing
 
-#### 🔄 Round-Trip Encoder (`encoder-new.ts`)
+#### 🔄 Round-Trip Encoder (Unified)
 
 - **Purpose**: Converts `MonologueParameters` back to SysEx for perfect round-trip
-- **Status**: 🚧 60% working (3/5 test dumps pass)
-- **Known Issues**: Missing sequencer/motion parameter sections
-- **Dependencies**: Requires comprehensive `MonologueParameters` from `decoder.ts`
+- **Status**: ✅ Fully integrated into `encoder.ts` (all test dumps pass)
+- **Implementation**: Shares bit helpers from `utilities.ts`
+
+#### 🧪 Validation & Diff Helpers
+
+- `validateMonologueParameters(params)` → Non-throwing validation result before encoding
+- `diffMonologueParameters(a, b)` → Structured list of parameter differences (for future patch diff UI)
 
 ## Usage Patterns
 
@@ -90,11 +94,11 @@ This library evolved through several phases:
 src/lib/sysex/
 ├── index.ts              # Public API with clear usage documentation
 ├── README.md             # This documentation
-├── encoder.ts            # 7↔8 bit transformation utilities
+├── encoder.ts            # 7↔8 bit transformation + unified round-trip encoder + validation
 ├── utilities.ts          # Bit manipulation helpers
 ├── monologue-parser.ts   # MVP parser (VCF + patch names)
 ├── decoder.ts            # Comprehensive parser (full MIDI spec)
-├── encoder-new.ts        # Round-trip encoder (work in progress)
+├── parameter-diff.ts     # Parameter diff tool
 └── tests/                # Comprehensive test suites for all components
 ```
 
@@ -102,7 +106,7 @@ src/lib/sysex/
 
 - **MVP Parser**: 9/9 tests passing (focused on VCF parameters)
 - **Comprehensive Decoder**: 8/8 tests passing (full parameter extraction)
-- **Round-Trip Encoding**: 3/5 dumps working (60% success rate)
+- **Round-Trip Encoding**: 5/5 dumps passing (100% success rate)
 
 ## Future Development
 

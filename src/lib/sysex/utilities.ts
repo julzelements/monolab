@@ -70,3 +70,41 @@ export function transformDataFrom7BitTo8Bit(records: number[]): number[] {
 
   return eBitValues;
 }
+
+// ---------------------------------------------------------------------------
+// Additional shared helpers (factored out from encoder consolidation)
+// ---------------------------------------------------------------------------
+
+/** Extract the high 8 bits from a 10-bit value */
+export function getHighBits(value10bit: number): number { return (value10bit >> 2) & 0xff; }
+/** Extract the low 2 bits from a 10-bit value */
+export function getLowBits(value10bit: number): number { return value10bit & 0x03; }
+/** Set specific bits (inclusive start/end, 0 = LSB) */
+export function setBits(targetByte: number, value: number, startBit: number, endBit: number): number {
+  const bitCount = endBit - startBit + 1;
+  const mask = ((1 << bitCount) - 1) << startBit;
+  return (targetByte & ~mask) | ((value & ((1 << bitCount) - 1)) << startBit);
+}
+/** Pack the low 2 bits from a 10-bit value at an offset (inverse of addLowerBits) */
+export function packLowerBits(targetByte: number, value10bit: number, offset: number): number {
+  const lowBits = getLowBits(value10bit);
+  return setBits(targetByte, lowBits, offset, offset + 1);
+}
+/** Transform 8-bit internal data back into 7-bit MIDI packed format */
+export function transformDataFrom8BitTo7Bit(data8bit: number[]): number[] {
+  const result: number[] = [];
+  for (let i = 0; i < data8bit.length; i += 7) {
+    const group = data8bit.slice(i, i + 7);
+    let highBitsByte = 0;
+    const lowBitsBytes: number[] = [];
+    for (let j = 0; j < group.length; j++) {
+      const byte = group[j];
+      const highBit = (byte >> 7) & 1;
+      const lowBits = byte & 0x7f;
+      highBitsByte |= highBit << j;
+      lowBitsBytes.push(lowBits);
+    }
+    result.push(highBitsByte, ...lowBitsBytes);
+  }
+  return result;
+}
