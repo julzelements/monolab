@@ -185,7 +185,7 @@ export function is8BitSafe(data: number[]): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// High-level round-trip parameter encoder (merged from encoder-new.ts)
+// High-level round-trip parameter encoder
 // ---------------------------------------------------------------------------
 import {
   addLowerBits,
