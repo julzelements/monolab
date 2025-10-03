@@ -90,6 +90,41 @@ After the MVP is working, the next iterations will add:
 
 ---
 
+## 📦 Patch Save Flow (Implemented Skeleton)
+
+Current codebase now includes an initial end-to-end path for saving a raw Monologue program dump (520-byte SysEx) to the database:
+
+1. UI button (temporary) in `src/app/page.tsx` prepares a 520-byte placeholder buffer.
+2. Client helper `savePatch` (`src/lib/utils/patch-saving.ts`) POSTs to `/api/patches`.
+3. API route `src/app/api/patches/route.ts` validates payload and invokes `PatchService.createFromSysEx`.
+4. `PatchService` (`src/lib/services/patch-service.ts`) decodes full parameters, hashes SysEx (SHA-256), dedups, and persists.
+
+### Added Schema Fields (Pending Migration Execution)
+
+- `sysexHash` (unique) – deduplication + lookup
+- `sourcePatchId` – future forking lineage
+- `deletedAt` – soft delete support
+
+### Next Wiring Tasks
+
+- Capture real incoming SysEx dump from device (replace dummy buffer)
+- Implement actual DB migration (currently generate failed due to env var; provide `DIRECT_URL` or remove field temporarily)
+- Add GET endpoints for listing patches (own/public)
+- Filter out soft-deleted patches (`deletedAt is null`)
+- Auth integration to set `authorId` (currently anonymous fallback)
+- UI feedback improvements (loading states, error banners)
+- Fork & Favorite flows (future)
+
+### Validation / Safety
+
+- Length check enforces 520-byte program dumps
+- Decode failure aborts save (returns 500 with message)
+- Dedup returns existing ID with `created:false`
+
+---
+
+---
+
 ## 🎯 Original Specification
 
 See the full [Monolab Functional Specification](#monolab--functional-specification) below for the complete vision.

@@ -44,9 +44,16 @@ model Patch {
   
   // SysEx data (raw MIDI data)
   sysexData   Bytes
+  // Hash of raw SysEx (deduplication, fast lookup) - SHA256 hex
+  sysexHash   String   @unique
   
   // Parsed parameters for easier querying and UI
   parameters  Json
+
+  // Fork lineage (optional reference to original patch)
+  sourcePatchId String?
+  sourcePatch   Patch? @relation("PatchSource", fields: [sourcePatchId], references: [id], onDelete: SetNull)
+  forks         Patch[] @relation("PatchSource")
   
   // Organization
   bankId      String?
@@ -60,6 +67,9 @@ model Patch {
   // Sharing
   shareToken    String? @unique // For URL sharing
   sharedAt      DateTime?
+
+  // Soft delete
+  deletedAt     DateTime?
 
   favorites     UserPatchFavorite[]
   
