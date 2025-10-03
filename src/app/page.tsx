@@ -2,15 +2,13 @@
 
 import { useState } from "react";
 import { savePatch } from "@/lib/utils/patch-saving";
-import { VCFControls } from "@/components/VCFControls";
-import { MVPPatch } from "@/types/mvp";
+import { MonologueEditor } from "@/components/MonologueEditor";
+import { MonologueParameters } from "@/lib/sysex/decoder";
+import { defaultMonologueParameters } from "@/lib/defaults/monologue-defaults";
+import { encodeMonologueParameters } from "@/lib/sysex/encoder";
 
 export default function HomePage() {
-  const [currentPatch, setCurrentPatch] = useState<MVPPatch>({
-    name: "Init Patch",
-    cutoff: 127,
-    resonance: 0,
-  });
+  const [currentParameters, setCurrentParameters] = useState<MonologueParameters>(defaultMonologueParameters);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
 
@@ -18,10 +16,12 @@ export default function HomePage() {
     setSaving(true);
     setSaveMessage(null);
     try {
-      // TODO: Replace placeholder with actual captured 520-byte SysEx dump from device
-      // For now create a dummy array of correct length filled with zeros so API path is validated
-      const dummy = new Uint8Array(520);
-      const result = await savePatch({ sysex: dummy, name: currentPatch.name });
+      // Encode current parameters to SysEx
+      const sysexData = encodeMonologueParameters(currentParameters);
+      const result = await savePatch({
+        sysex: new Uint8Array(sysexData),
+        name: currentParameters.patchName,
+      });
       setSaveMessage(result.success ? `Saved patch id ${result.data.id}` : `Save failed`);
     } catch (e: any) {
       setSaveMessage(e.message || "Error saving patch");
@@ -32,25 +32,36 @@ export default function HomePage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="max-w-2xl mx-auto">
-        <VCFControls patch={currentPatch} onPatchChange={setCurrentPatch} />
+      <div className="max-w-6xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Monologue Editor</h1>
+          <p className="text-gray-600">Complete parameter control for Korg Monologue</p>
+        </div>
 
-        <div className="mt-8 p-4 bg-gray-100 rounded-lg">
+        <MonologueEditor parameters={currentParameters} onParametersChange={setCurrentParameters} className="mb-8" />
+
+        <div className="p-4 bg-gray-100 rounded-lg">
           <h3 className="font-medium mb-2">Instructions:</h3>
-          <ol className="text-sm text-gray-600 space-y-1">
-            <li>1. Select your Korg Monologue from the MIDI dropdowns above</li>
-            <li>2. Enable Debug Mode to see MIDI messages in the console</li>
-            <li>3. Move the sliders to control cutoff and resonance</li>
-            <li>4. Hardware changes will be reflected in the UI</li>
+          <ol className="text-sm text-gray-600 space-y-1 mb-4">
+            <li>1. Adjust any parameter using the knobs and controls above</li>
+            <li>2. Parameters are organized by section: VCO, Filter, Envelope, LFO, etc.</li>
+            <li>3. All values are automatically synchronized</li>
+            <li>4. Click Save to store the current patch</li>
           </ol>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
-          >
-            {saving ? "Saving..." : "Save Patch"}
-          </button>
-          {saveMessage && <p className="mt-2 text-sm">{saveMessage}</p>}
+          <div className="flex items-center space-x-4">
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
+            >
+              {saving ? "Saving..." : "Save Patch"}
+            </button>
+            {saveMessage && (
+              <span className={`text-sm ${saveMessage.includes("Saved") ? "text-green-600" : "text-red-600"}`}>
+                {saveMessage}
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { createHash } from "crypto";
 
 const prisma = new PrismaClient();
 
@@ -85,11 +86,15 @@ async function main() {
       0xf7, // End of SysEx
     ]);
 
+    // Calculate hash for the SysEx data
+    const sysexHash = createHash("sha256").update(mockSysEx).digest("hex");
+
     await prisma.patch.create({
       data: {
         ...patchData,
         authorId: user.id,
         sysexData: mockSysEx,
+        sysexHash,
         shareToken: `share_${Math.random().toString(36).substr(2, 9)}`,
       },
     });
