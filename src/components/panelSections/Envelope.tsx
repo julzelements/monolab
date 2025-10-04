@@ -1,5 +1,6 @@
 import SwitchContainer from "@/components/controlGroups/SwitchContainer";
 import Knob from "@/components/controlGroups/Knob";
+import InvertToggle from "@/components/controlGroups/InvertToggle";
 import AttackDecay from "../assets/AttackDecay";
 import AttackGateDecay from "../assets/AttackGateDecay";
 import Gate from "../assets/Gate";
@@ -30,16 +31,24 @@ export const Envelope = (props: EnvelopeProps) => {
       />
       <Knob color="yellow" paramName="Attack" value={props.attack} onChange={props.onChangeAttack} />
       <Knob color="yellow" paramName="Decay" value={props.decay} onChange={props.onChangeDecay} />
-      <Knob
-        color="yellow"
-        paramName="Int"
-        fullParamName="envelope.intensity"
-        value={props.intensity}
-        onChange={props.onChangeIntensity}
-        onInvertChange={props.onIntensityInvertChange}
-        invertible={true}
-        invertedColor="orange"
-      />
+      <div className="control-group">
+        <Knob
+          color="yellow"
+          paramName="Int"
+          fullParamName="envelope.intensity"
+          value={props.intensity}
+          onChange={props.onChangeIntensity}
+          invertible={true}
+          invertedColor="orange"
+        />
+        <InvertToggle
+          paramName="Int"
+          testId="envelope-int-invert-toggle"
+          isInverted={props.intensity < 0}
+          onToggle={() => props.onIntensityInvertChange && props.onIntensityInvertChange(props.intensity >= 0)}
+          invertedColor="orange"
+        />
+      </div>
       <SwitchContainer
         paramName="Target"
         value={props.target}

@@ -19,7 +19,6 @@ interface KnobProps {
   value: number;
   invertible?: boolean;
   onChange: (newValue: number) => void;
-  onInvertChange?: (isInverted: boolean) => void;
 }
 
 const isClassroomMode = process.env.NEXT_PUBLIC_CLASSROOM_MODE === "true";
@@ -53,13 +52,6 @@ const Knob = memo((props: KnobProps) => {
       setActive(false);
     }, 1500);
   }, [props.value]);
-
-  // Toggle invert function
-  const toggleInvert = () => {
-    if (props.onInvertChange && props.invertible) {
-      props.onInvertChange(!isInverted);
-    }
-  };
 
   const startDrag = (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault();
@@ -109,25 +101,6 @@ const Knob = memo((props: KnobProps) => {
         </div>
       </div>
       <p className="control-label label">{props.paramName}</p>
-      {props.invertible && (
-        <button
-          onClick={toggleInvert}
-          style={{
-            fontSize: "10px",
-            padding: "2px 6px",
-            marginTop: "2px",
-            borderRadius: "3px",
-            border: "1px solid #ccc",
-            background: isInverted ? props.invertedColor || "#ff9500" : "#f0f0f0",
-            color: isInverted ? "white" : "black",
-            cursor: "pointer",
-            fontWeight: "bold",
-          }}
-          data-testid={`${props.paramName}-invert-toggle`}
-        >
-          {isInverted ? "INV" : "NORM"}
-        </button>
-      )}
     </div>
   );
 });

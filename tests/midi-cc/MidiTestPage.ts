@@ -150,14 +150,14 @@ export class MidiTestPage {
     const centerX = boundingBox.x + boundingBox.width / 2;
     const centerY = boundingBox.y + boundingBox.height / 2;
 
-    // Calculate target position based on typical knob range (50° to 310°)
+    // Use more extreme angles to ensure we hit the true min/max positions
     let targetAngle: number;
     switch (position) {
       case "min":
-        targetAngle = 50; // Start angle
+        targetAngle = 45; // More extreme start angle
         break;
       case "max":
-        targetAngle = 310; // End angle
+        targetAngle = 315; // More extreme end angle
         break;
       case "mid":
         targetAngle = 180; // Middle angle
@@ -165,7 +165,7 @@ export class MidiTestPage {
     }
 
     // Convert angle to coordinates (knob rotation starts from bottom)
-    const radius = 30; // Approximate radius for mouse position
+    const radius = 40; // Larger radius for more precise positioning
     const radians = ((targetAngle - 90) * Math.PI) / 180; // -90 to adjust for coordinate system
     const targetX = centerX + Math.cos(radians) * radius;
     const targetY = centerY + Math.sin(radians) * radius;
@@ -173,10 +173,10 @@ export class MidiTestPage {
     // Simulate drag from center to target position
     await knob.hover();
     await this.page.mouse.down();
-    await this.page.mouse.move(targetX, targetY);
+    await this.page.mouse.move(targetX, targetY, { steps: 5 }); // Add steps for smoother movement
     await this.page.mouse.up();
 
     // Wait a bit for the UI to update
-    await this.page.waitForTimeout(50);
+    await this.page.waitForTimeout(100);
   }
 }

@@ -1,5 +1,10 @@
 import SwitchContainer from "@/components/controlGroups/SwitchContainer";
 import Knob from "@/components/controlGroups/Knob";
+import InvertToggle from "@/components/controlGroups/InvertToggle";
+import Triangle from "../assets/Triangle";
+import Saw from "../assets/Saw";
+import Square from "../assets/Square";
+import Noise from "../assets/Noise";
 
 interface LFOProps {
   wave: number;
@@ -27,16 +32,24 @@ export const LFO = (props: LFOProps) => {
         labels={[<div key="fast">Fast</div>, <div key="slow">Slow</div>, <div key="1shot">1Shot</div>]}
       />
       <Knob color="green" paramName="Rate" value={props.rate} onChange={props.onChangeRate} />
-      <Knob
-        color="green"
-        paramName="Int"
-        fullParamName="lfo.intensity"
-        value={props.intensity}
-        onChange={props.onChangeIntensity}
-        onInvertChange={props.onIntensityInvertChange}
-        invertible={true}
-        invertedColor="orange"
-      />
+      <div className="control-group">
+        <Knob
+          color="green"
+          paramName="Int"
+          fullParamName="lfo.intensity"
+          value={props.intensity}
+          onChange={props.onChangeIntensity}
+          invertible={true}
+          invertedColor="orange"
+        />
+        <InvertToggle
+          paramName="Int"
+          testId="lfo-int-invert-toggle"
+          isInverted={props.intensity < 0}
+          onToggle={() => props.onIntensityInvertChange && props.onIntensityInvertChange(props.intensity >= 0)}
+          invertedColor="orange"
+        />
+      </div>
       <SwitchContainer
         paramName="Target"
         value={props.target}
