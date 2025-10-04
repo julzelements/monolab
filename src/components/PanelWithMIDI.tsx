@@ -165,7 +165,7 @@ export function PanelWithMIDI({ parameters, onParametersChange, className = "" }
         </span>
       </div>
 
-      <div className="App">
+      <div className="monologue-container">
         <div className="section-wrapper">
           <div className="panel">
             <Panel setParamViaCallback={setParamViaCallback} paramState={paramState} Parameters={Parameters} />
