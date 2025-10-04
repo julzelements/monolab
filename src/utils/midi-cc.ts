@@ -135,7 +135,7 @@ export function parameterToMidiCC(parameter: string, value: number): { cc: numbe
     case "lfo.rate":
       return { cc: MIDI_CC.LFO_RATE, midiValue: Math.round((value / 1023) * 127) };
     case "lfo.intensity":
-      return { cc: MIDI_CC.LFO_INT, midiValue: Math.round((value / 1023) * 127) };
+      return { cc: MIDI_CC.LFO_INT, midiValue: Math.round(((value + 512) / 1024) * 127) }; // -512 to +511 range (same as EG_INT)
 
     // Discrete parameters (use exact transmit values)
     case "oscillators.vco2.octave":
@@ -193,7 +193,7 @@ export function midiCCToParameter(cc: number, midiValue: number): { parameter: s
     case MIDI_CC.LFO_RATE:
       return { parameter: "lfo.rate", value: Math.round((midiValue / 127) * 1023) };
     case MIDI_CC.LFO_INT:
-      return { parameter: "lfo.intensity", value: Math.round((midiValue / 127) * 1023) };
+      return { parameter: "lfo.intensity", value: Math.round((midiValue / 127) * 1024) - 512 }; // Convert to -512 to +511 (same as EG_INT)
 
     // VCO 1 Pitch (receive only - not in transmit spec)
     case MIDI_CC.VCO_1_PITCH:

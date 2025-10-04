@@ -12,6 +12,7 @@ interface LFOProps {
   onChangeRate: (value: number) => void;
   onChangeIntensity: (value: number) => void;
   onChangeTarget: (value: number) => void;
+  onIntensityInvertChange?: (isInverted: boolean) => void;
 }
 
 export const LFO = (props: LFOProps) => {
@@ -29,8 +30,10 @@ export const LFO = (props: LFOProps) => {
       <Knob
         color="green"
         paramName="Int"
+        fullParamName="lfo.intensity"
         value={props.intensity}
         onChange={props.onChangeIntensity}
+        onInvertChange={props.onIntensityInvertChange}
         invertible={true}
         invertedColor="orange"
       />

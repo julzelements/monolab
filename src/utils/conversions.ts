@@ -95,13 +95,22 @@ export const convertToMidiRange = (sysexValue: number, parameter: Parameter) => 
 };
 
 export const convertInvertibleSysexToDegrees = (sysexValue: number, startAngle: number, endAngle: number) => {
-  return sysexValue >= 0
-    ? rangeMap(0, 511, startAngle, endAngle, sysexValue)
-    : rangeMap(-511, -1, startAngle, endAngle, sysexValue);
+  // For invertible knobs, both positive and negative values use the full angle range
+  // Non-inverted: 0 to +511 maps to startAngle to endAngle
+  // Inverted: 0 to -511 maps to startAngle to endAngle
+  const absValue = Math.abs(sysexValue);
+  return rangeMap(0, 511, startAngle, endAngle, absValue);
 };
 
-export const convertDegreesToInvertibleSysex = (sysexValue: number, startAngle: number, endAngle: number) => {
-  return sysexValue >= 0
-    ? rangeMap(0, 511, startAngle, endAngle, sysexValue)
-    : rangeMap(-511, -1, startAngle, endAngle, sysexValue);
+export const convertDegreesToInvertibleSysex = (
+  degrees: number,
+  startAngle: number,
+  endAngle: number,
+  isInverted: boolean
+) => {
+  // Convert degrees to 0-511 range first
+  const absValue = Math.round(rangeMap(startAngle, endAngle, 0, 511, degrees));
+
+  // Apply invert state to determine sign
+  return isInverted ? -absValue : absValue;
 };

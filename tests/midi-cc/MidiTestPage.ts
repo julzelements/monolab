@@ -102,10 +102,20 @@ export class MidiTestPage {
     await this.page.waitForSelector('[data-testid="Cutoff"]', { timeout: 5000 });
   }
 
+  async setupMockMIDI() {
+    // This is handled in goto() with addInitScript, so just ensure we're connected
+    await this.connectMidiDevice();
+  }
+
   async sendMidiMessage(data: number[]) {
     await this.page.evaluate((bytes) => {
       window.__mockMIDIInput.dispatchMessage(new Uint8Array(bytes));
     }, data);
+  }
+
+  async sendMIDICC(cc: number, value: number) {
+    // Send MIDI CC message: [status, cc_number, value]
+    await this.sendMidiMessage([0xb0, cc, value]); // Channel 1
   }
 
   async getMessages(): Promise<Uint8Array[]> {
@@ -114,5 +124,108 @@ export class MidiTestPage {
     });
 
     return raw.map((arr) => new Uint8Array(arr));
+  }
+
+  async clearMIDIMessages() {
+    await this.page.evaluate(() => {
+      window.__sentMidiMessages = [];
+    });
+  }
+
+  async getOutgoingMIDIMessages(): Promise<{cc: number, value: number}[]> {
+    const messages = await this.getMessages();
+    return messages
+      .filter(msg => msg.length === 3 && msg[0] === 0xb0) // MIDI CC messages
+      .map(msg => ({ cc: msg[1], value: msg[2] }));
+  }
+
+  async getKnobDebugInfo(knobSelector: string) {
+    // Find the knob's control group container
+    const knobElement = this.page.locator(knobSelector);
+    
+    // Based on the page snapshot, the debug info is in a sibling div within the same control group
+    // Navigate to the control group and find the debug div containing all the info
+    const controlGroup = knobElement.locator('../../..');  // Go up to control-group level
+    
+    // Find all debug text within the control group
+    const debugLines = await controlGroup.locator('text=/Sysex:|MIDI:|Angle:|Inverted:/').allTextContents();
+    
+    // Combine all debug lines and parse them
+    const debugText = debugLines.join('\n');
+    
+    let sysex = 0, midiCC = 0, ccNumber = 0, degrees = '0', startAngle = 0, endAngle = 0, isInverted = false;
+    
+    for (const line of debugLines) {
+      if (line.includes('Sysex:')) {
+        const match = line.match(/Sysex: (-?\d+)/);
+        if (match) sysex = parseInt(match[1]);
+      } else if (line.includes('MIDI:')) {
+        const midiMatch = line.match(/MIDI: (\d+) \(CC(\d+)\)/);
+        if (midiMatch) {
+          midiCC = parseInt(midiMatch[1]);
+          ccNumber = parseInt(midiMatch[2]);
+        }
+      } else if (line.includes('Angle:')) {
+        const angleMatch = line.match(/Angle: ([\d.]+)° \(([\d.]+)° - ([\d.]+)°\)/);
+        if (angleMatch) {
+          degrees = angleMatch[1];
+          startAngle = parseFloat(angleMatch[2]);
+          endAngle = parseFloat(angleMatch[3]);
+        }
+      } else if (line.includes('Inverted:')) {
+        isInverted = line.includes('Yes');
+      }
+    }
+
+    return {
+      sysex,
+      midiCC,
+      ccNumber,
+      degrees,
+      startAngle,
+      endAngle,
+      isInverted
+    };
+  }
+
+  async setKnobToPosition(knobSelector: string, position: 'min' | 'max' | 'mid') {
+    const knob = this.page.locator(knobSelector);
+    const boundingBox = await knob.boundingBox();
+    
+    if (!boundingBox) {
+      throw new Error(`Could not find knob ${knobSelector}`);
+    }
+
+    const centerX = boundingBox.x + boundingBox.width / 2;
+    const centerY = boundingBox.y + boundingBox.height / 2;
+    
+    // Calculate target position based on typical knob range (50° to 310°)
+    let targetAngle: number;
+    switch (position) {
+      case 'min':
+        targetAngle = 50; // Start angle
+        break;
+      case 'max':
+        targetAngle = 310; // End angle
+        break;
+      case 'mid':
+        targetAngle = 180; // Middle angle
+        break;
+    }
+
+    // Convert angle to coordinates (knob rotation starts from bottom)
+    const radius = 30; // Approximate radius for mouse position
+    const radians = (targetAngle - 90) * Math.PI / 180; // -90 to adjust for coordinate system
+    const targetX = centerX + Math.cos(radians) * radius;
+    const targetY = centerY + Math.sin(radians) * radius;
+
+    // Simulate drag from center to target position
+    await knob.hover();
+    await this.page.mouse.down();
+    await this.page.mouse.move(targetX, targetY);
+    await this.page.mouse.up();
+    
+    // Wait a bit for the UI to update
+    await this.page.waitForTimeout(50);
   }
 }

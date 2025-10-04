@@ -15,6 +15,7 @@ interface EnvelopeProps {
   onChangeDecay: (value: number) => void;
   onChangeIntensity: (value: number) => void;
   onChangeTarget: (value: number) => void;
+  onIntensityInvertChange?: (isInverted: boolean) => void;
 }
 
 export const Envelope = (props: EnvelopeProps) => {
@@ -32,8 +33,10 @@ export const Envelope = (props: EnvelopeProps) => {
       <Knob
         color="yellow"
         paramName="Int"
+        fullParamName="envelope.intensity"
         value={props.intensity}
         onChange={props.onChangeIntensity}
+        onInvertChange={props.onIntensityInvertChange}
         invertible={true}
         invertedColor="orange"
       />

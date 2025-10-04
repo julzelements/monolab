@@ -20,6 +20,14 @@ const Panel = ({
     onParameterChange(path, value);
   };
 
+  // Create invert callback for invertible parameters
+  const createInvertCallback = (path: string) => (isInverted: boolean) => {
+    const currentValue = getParameterValue(parameters, path);
+    const absValue = Math.abs(currentValue);
+    const newValue = isInverted ? -absValue : absValue;
+    onParameterChange(path, newValue);
+  };
+
   return (
     <div className="monologue-container">
       <div className="section-wrapper">
@@ -73,6 +81,7 @@ const Panel = ({
                 onChangeDecay={createParameterCallback("envelope.decay")}
                 onChangeIntensity={createParameterCallback("envelope.intensity")}
                 onChangeTarget={createParameterCallback("envelope.target")}
+                onIntensityInvertChange={createInvertCallback("envelope.intensity")}
               />
               <LFO
                 wave={getParameterValue(parameters, "lfo.wave")}
@@ -85,6 +94,7 @@ const Panel = ({
                 onChangeRate={createParameterCallback("lfo.rate")}
                 onChangeIntensity={createParameterCallback("lfo.intensity")}
                 onChangeTarget={createParameterCallback("lfo.target")}
+                onIntensityInvertChange={createInvertCallback("lfo.intensity")}
               />
             </div>
           </div>

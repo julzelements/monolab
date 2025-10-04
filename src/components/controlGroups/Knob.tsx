@@ -1,18 +1,25 @@
 "use client";
 import { useEffect, useState, memo, useRef } from "react";
-import { sysexRangeMax, convertInvertibleSysexToDegrees } from "../../utils/conversions";
+import {
+  sysexRangeMax,
+  convertInvertibleSysexToDegrees,
+  convertDegreesToInvertibleSysex,
+} from "../../utils/conversions";
 import { rangeMap, cursorCoordsToDegrees } from "../../utils/utils";
+import { parameterToMidiCC } from "../../utils/midi-cc";
 
 interface KnobProps {
   paramMin?: number;
   paramMax?: number;
   paramName: string;
+  fullParamName?: string; // Full parameter name for MIDI CC lookup
   fullAngle?: number;
   color?: string;
   invertedColor?: string;
   value: number;
   invertible?: boolean;
   onChange: (newValue: number) => void;
+  onInvertChange?: (isInverted: boolean) => void;
 }
 
 const isClassroomMode = process.env.NEXT_PUBLIC_CLASSROOM_MODE === "true";
@@ -29,7 +36,8 @@ const Knob = memo((props: KnobProps) => {
   const invertibleSysexToDegrees = (sysexValue: number) =>
     convertInvertibleSysexToDegrees(sysexValue, startAngle, endAngle);
   const sysexToDegrees = (sysexValue: number) => rangeMap(paramMin, paramMax, startAngle, endAngle, sysexValue);
-  // TODO invertibleDegreesToSysex (can't do without additional UI to set inverted controls)
+  const invertibleDegreesToSysex = (degrees: number, inverted: boolean) =>
+    convertDegreesToInvertibleSysex(degrees, startAngle, endAngle, inverted);
   const degreesToSysex = (degrees: number) => Math.floor(rangeMap(startAngle, endAngle, paramMin, paramMax, degrees));
 
   const degrees: number = props.invertible ? invertibleSysexToDegrees(props.value) : sysexToDegrees(props.value);
@@ -46,6 +54,13 @@ const Knob = memo((props: KnobProps) => {
     }, 1500);
   }, [props.value]);
 
+  // Toggle invert function
+  const toggleInvert = () => {
+    if (props.onInvertChange && props.invertible) {
+      props.onInvertChange(!isInverted);
+    }
+  };
+
   const startDrag = (e: React.MouseEvent<HTMLElement>) => {
     e.preventDefault();
     const knob = e.currentTarget.getBoundingClientRect();
@@ -55,7 +70,14 @@ const Knob = memo((props: KnobProps) => {
     };
     const moveHandler = (e: { clientX: number; clientY: number }) => {
       const degrees = cursorCoordsToDegrees(e.clientX, e.clientY, pts, startAngle, endAngle);
-      props.onChange(degreesToSysex(degrees));
+
+      if (props.invertible) {
+        const newValue = invertibleDegreesToSysex(degrees, isInverted || false);
+        props.onChange(newValue);
+      } else {
+        const newValue = degreesToSysex(degrees);
+        props.onChange(newValue);
+      }
     };
     document.addEventListener("mousemove", moveHandler);
     document.addEventListener("mouseup", () => {
@@ -87,6 +109,25 @@ const Knob = memo((props: KnobProps) => {
         </div>
       </div>
       <p className="control-label label">{props.paramName}</p>
+      {props.invertible && (
+        <button
+          onClick={toggleInvert}
+          style={{
+            fontSize: "10px",
+            padding: "2px 6px",
+            marginTop: "2px",
+            borderRadius: "3px",
+            border: "1px solid #ccc",
+            background: isInverted ? props.invertedColor || "#ff9500" : "#f0f0f0",
+            color: isInverted ? "white" : "black",
+            cursor: "pointer",
+            fontWeight: "bold",
+          }}
+          data-testid={`${props.paramName}-invert-toggle`}
+        >
+          {isInverted ? "INV" : "NORM"}
+        </button>
+      )}
     </div>
   );
 });
