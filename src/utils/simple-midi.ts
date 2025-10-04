@@ -277,16 +277,24 @@ export class SimpleMIDIManager {
         parameterName: this.getCCParameterName(ccNumber),
       });
 
-      // Check if this is feedback from our own outgoing message
+      // Improved feedback filtering: distinguish between immediate feedback and hardware input
       const messageKey = `${ccNumber}:${value}`;
       const recentTimestamp = this.recentOutgoingMessages.get(messageKey);
       const now = Date.now();
 
-      if (recentTimestamp && now - recentTimestamp < 25) {
-        // This is likely feedback from our own message, ignore it (reduced from 100ms to 25ms)
-        this.debugLog("CONTROL_CHANGE", `Ignoring feedback from recent outgoing CC${ccNumber} = ${value}`);
-        this.recentOutgoingMessages.delete(messageKey); // Clean up
+      if (recentTimestamp && now - recentTimestamp < 10) {
+        // This is very likely immediate feedback from our own message (< 10ms), ignore it
+        this.debugLog(
+          "CONTROL_CHANGE",
+          `Ignoring immediate feedback from recent outgoing CC${ccNumber} = ${value} (${now - recentTimestamp}ms ago)`
+        );
+        this.recentOutgoingMessages.delete(messageKey); // Clean up immediately
         return;
+      }
+
+      // Clear old entries to prevent blocking legitimate hardware input
+      if (recentTimestamp && now - recentTimestamp >= 10) {
+        this.recentOutgoingMessages.delete(messageKey);
       }
 
       // NEW: Comprehensive MIDI CC parameter mapping
