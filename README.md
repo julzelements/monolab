@@ -1,22 +1,47 @@
-# Monolab – MVP (Cutoff & Resonance Controller)
+# Monolab
 
-A simplified MVP version of Monolab focusing on real-time VCF (filter) control for the **Korg Monologue** synthesizer.
+A web-based patch manager and real-time editor for the **Korg Monologue** synthesizer, featuring bidirectional MIDI communication and a complete hardware-mirrored interface.
 
-## 🎯 MVP Features
+## ✨ Features
 
-- **Real-time VCF Control**: Cutoff and Resonance sliders with bidirectional MIDI communication
-- **Hardware Sync**: Changes on the Monologue hardware are instantly reflected in the web UI
-- **Simple Interface**: Clean, responsive interface focused on essential filter controls
+### 🎛️ Complete Hardware Interface
+
+- **Full Panel UI**: All Monologue parameters accessible through web interface
+- **Real-time Sync**: Hardware changes instantly reflected in UI and vice versa
+- **Invertible Parameters**: INT knobs with NORM/INV toggle functionality
+- **Visual Feedback**: Color-coded controls matching hardware design
+
+### 🔄 MIDI Communication
+
+- **Bidirectional Control**: Send and receive MIDI CC messages
+- **Hardware Sync**: Turn knobs on Monologue to see UI update in real-time
+- **Parameter Feedback**: Elegant loop prevention for smooth interaction
+- **SysEx Support**: Full program dump encoding/decoding
+
+### 🧪 Test Coverage
+
+- **Comprehensive Test Suite**: Playwright E2E tests for all controls
+- **MIDI Testing**: Mock MIDI environment for reliable automation
+- **Parameter Validation**: Round-trip encode/decode verification
+- **Hardware Simulation**: Test hardware interactions without physical device
 
 ---
 
 ## 🚀 Quick Start
 
-### Option 1: Local Development (No Docker)
+### Prerequisites
 
-1. **Install dependencies**:
+- Node.js 18+
+- Chrome/Edge browser (for Web MIDI API)
+- Korg Monologue (optional for full experience)
+
+### Installation
+
+1. **Clone and install**:
 
    ```bash
+   git clone <repository-url>
+   cd monolab
    npm install
    ```
 
@@ -26,100 +51,307 @@ A simplified MVP version of Monolab focusing on real-time VCF (filter) control f
    cp .env.example .env.local
    ```
 
-3. **Start the development server**:
+3. **Start development server**:
 
    ```bash
    npm run dev
    ```
 
-4. **Open your browser** to `http://localhost:3000`
+4. **Open browser** to `http://localhost:3000`
 
-### Option 2: Docker Development
+### Docker Development
 
-1. **Start the development environment**:
-
-   ```bash
-   npm run docker:dev
-   ```
-
-2. **Open your browser** to `http://localhost:3000`
+```bash
+npm run docker:dev
+```
 
 ---
 
-## 🎛️ Using the Controller
+## � Using Monolab
 
 1. **Connect your Korg Monologue** via USB
-2. **Allow MIDI access** when prompted by your browser
-3. **Move the sliders** in the web interface to control cutoff and resonance
-4. **Turn knobs on the hardware** to see the UI update in real-time
+2. **Allow MIDI access** when prompted by browser
+3. **Turn knobs on hardware** → see UI controls move in real-time
+4. **Adjust UI controls** → hear changes on the synthesizer
+5. **Toggle INT knobs** between NORM/INV modes for creative modulation
+
+### Special Features
+
+**Invertible Parameters (INT Knobs)**:
+
+- EG and LFO intensity knobs support positive/negative values
+- Click NORM/INV toggle to flip parameter sign
+- Visual feedback with color changes when inverted
+- Hardware integration maintains toggle state
 
 ---
 
 ## 🛠️ Development
 
-### Project Structure (MVP)
+### Project Structure
 
 ```
 src/
-├── app/                    # Next.js app directory
-│   ├── layout.tsx         # Root layout
-│   └── page.tsx          # Home page with VCF controls
+├── app/                           # Next.js app directory
+│   ├── layout.tsx                # Root layout with providers
+│   ├── page.tsx                  # Main application page
+│   └── api/patches/              # Patch save/load API routes
 ├── components/
-│   └── VCFControls.tsx   # Main filter control component
-├── types/
-│   └── mvp.ts           # Simplified types for MVP
-└── utils/
-    └── simple-midi.ts   # Simplified MIDI utilities
+│   ├── Panel.tsx                 # Main hardware panel component
+│   ├── PanelWithMIDI.tsx        # Panel with MIDI integration
+│   ├── controlGroups/           # Reusable control components
+│   │   ├── Knob.tsx            # Rotary knob control
+│   │   ├── InvertToggle.tsx    # NORM/INV toggle button
+│   │   └── SwitchContainer.tsx # Multi-position switches
+│   └── panelSections/          # Hardware section components
+│       ├── Envelope.tsx        # EG section with INT knob
+│       ├── LFO.tsx            # LFO section with INT knob
+│       ├── Filter.tsx         # VCF controls
+│       ├── VCO1.tsx          # VCO1 oscillator
+│       ├── VCO2.tsx          # VCO2 oscillator
+│       └── Mixer.tsx         # Level controls
+├── lib/
+│   ├── sysex/                  # SysEx encode/decode system
+│   ├── services/               # Business logic services
+│   └── utils/                  # Helper utilities
+├── types/                      # TypeScript definitions
+├── utils/                      # MIDI and conversion utilities
+└── tests/                      # Playwright E2E tests
 ```
 
-### MIDI Implementation
+### Key Architecture Decisions
 
-The MVP uses the Web MIDI API to communicate with the Monologue:
+**Component Hierarchy**:
 
-- **Cutoff**: CC 74 (0-127)
-- **Resonance**: CC 71 (0-127)
+- `PanelWithMIDI` → `Panel` → Section Components → Control Groups
+- Separation of concerns: MIDI logic separate from UI components
+- Reusable control components with consistent interfaces
 
-### Next Steps
+**MIDI System**:
 
-After the MVP is working, the next iterations will add:
+- `simple-midi.ts`: Core MIDI communication with feedback prevention
+- `midi-cc.ts`: Parameter to MIDI CC mapping and conversion
+- `conversions.ts`: Value conversion utilities for different parameter types
 
-- More parameters (VCO, EG, LFO, etc.)
-- Patch save/load functionality
-- Patch sharing via URLs
-- Full database integration
+**Test Architecture**:
+
+- Comprehensive E2E tests using Playwright
+- Mock MIDI can act as a virtual device to send and recieve midi
 
 ---
 
-## 📦 Patch Save Flow (Implemented Skeleton)
+### MIDI Implementation
 
-Current codebase now includes an initial end-to-end path for saving a raw Monologue program dump (520-byte SysEx) to the database:
+**Parameter Control**:
 
-1. UI button (temporary) in `src/app/page.tsx` prepares a 520-byte placeholder buffer.
-2. Client helper `savePatch` (`src/lib/utils/patch-saving.ts`) POSTs to `/api/patches`.
-3. API route `src/app/api/patches/route.ts` validates payload and invokes `PatchService.createFromSysEx`.
-4. `PatchService` (`src/lib/services/patch-service.ts`) decodes full parameters, hashes SysEx (SHA-256), dedups, and persists.
+- All Monologue parameters mapped to MIDI CC values
+- Bidirectional communication with elegant feedback loop prevention
+- Special handling for invertible parameters (EG/LFO intensity)
 
-### Added Schema Fields (Pending Migration Execution)
+**Key MIDI CCs**:
 
-- `sysexHash` (unique) – deduplication + lookup
-- `sourcePatchId` – future forking lineage
-- `deletedAt` – soft delete support
+```
+Drive:        CC 5   (0-127)
+VCO1 Shape:   CC 16  (0-127)
+VCO2 Pitch:   CC 17  (0-127)
+VCO1 Mix:     CC 32  (0-127)
+VCO2 Mix:     CC 33  (0-127)
+Cutoff:       CC 74  (0-127)
+Resonance:    CC 71  (0-127)
+Attack:       CC 73  (0-127)
+Decay:        CC 75  (0-127)
+EG INT:       CC 25  (0-127, internally -511 to +511)
+LFO Rate:     CC 76  (0-127)
+LFO INT:      CC 26  (0-127, internally -511 to +511)
+```
 
-### Next Wiring Tasks
+---
 
-- Capture real incoming SysEx dump from device (replace dummy buffer)
-- Implement actual DB migration (currently generate failed due to env var; provide `DIRECT_URL` or remove field temporarily)
-- Add GET endpoints for listing patches (own/public)
-- Filter out soft-deleted patches (`deletedAt is null`)
-- Auth integration to set `authorId` (currently anonymous fallback)
-- UI feedback improvements (loading states, error banners)
-- Fork & Favorite flows (future)
+## � Current Status
 
-### Validation / Safety
+### ✅ Implemented Features
 
-- Length check enforces 520-byte program dumps
-- Decode failure aborts save (returns 500 with message)
-- Dedup returns existing ID with `created:false`
+- **Complete Hardware Panel UI** - All Monologue sections represented
+- **Bidirectional MIDI Communication** - Real-time hardware ↔ software sync
+- **Invertible INT Knobs** - EG/LFO intensity with NORM/INV toggles
+- **Comprehensive Test Suite** - E2E tests for all controls and MIDI interactions
+- **Parameter Feedback Prevention** - Elegant loop prevention for smooth UX
+- **SysEx System** - Full program dump encoding/decoding (foundation)
+- **Responsive Design** - Works on desktop and mobile devices
+
+### 🚧 In Development
+
+- **Patch Save/Load System** - Database integration and persistence
+- **Hardware Dump Integration** - Capture real SysEx from device
+- **UI Polish** - Visual improvements and user experience refinements
+
+### 📅 Roadmap
+
+**Phase 1: Core Patch Management** (Next)
+
+- [ ] Complete patch save/load functionality
+- [ ] Hardware program dump capture
+- [ ] Patch library with search/filter
+- [ ] Import/export SysEx files
+
+**Phase 2: Sharing & Collaboration**
+
+- [ ] Patch sharing via URLs
+- [ ] Public patch library
+- [ ] User accounts and authentication
+- [ ] Patch versioning and forking
+
+**Phase 3: Creative Tools**
+
+- [ ] Patch randomizer/generator
+- [ ] Parameter comparison/diff tools
+- [ ] Patch audition with built-in sequencer
+- [ ] Advanced categorization and tagging
+
+---
+
+## 🎛️ Invertible Parameter System
+
+### Overview
+
+The Monologue's EG and LFO intensity parameters are **invertible**, meaning they can have positive or negative values. This is represented in the UI with special INT knobs that have NORM/INV toggle buttons.
+
+### Technical Implementation
+
+**Value Range**:
+
+- Internal range: `-511` to `+511` (sysex)
+- MIDI CC range: `0` to `127` (standard)
+- Visual angle: Same for both positive and negative values
+
+**State Management**:
+
+- Knob value determines sign: `props.intensity < 0` = inverted
+- Toggle button reflects current state visually
+- Clicking toggle flips the sign while preserving magnitude
+- Zero value requires knob movement before toggle is visible
+
+**Key Design Decisions**:
+
+1. **Separate Components**: Toggle button outside knob component for cleaner state management
+2. **Visual Consistency**: Same knob angle for +250 and -250 values
+3. **Test IDs**: Specific test targeting for reliable automation
+4. **Zero Handling**: Toggle only effective when knob is away from center
+
+### Testing Considerations
+
+- Tests move knob away from zero before testing toggle functionality
+- Mock MIDI environment simulates hardware interactions
+- Specific test IDs ensure reliable element targeting
+
+---
+
+## 🧪 Testing
+
+### Running Tests
+
+```bash
+# Run all E2E tests
+npm run test:playwright
+
+# Run tests in UI mode
+npm run test:playwright:ui
+
+# Run tests in headed mode (see browser)
+npm run test:playwright:headed
+
+# Run specific test file
+npm run test:playwright -- tests/midi-cc/intKnobs.spec.ts
+```
+
+### Test Categories
+
+- **Parameter Tests**: Verify MIDI CC output for all controls
+- **Hardware Simulation**: Mock MIDI input to test UI updates
+- **INT Knob Tests**: Special tests for invertible parameter functionality
+- **Visual Tests**: Screenshot comparison for UI consistency
+
+### SysEx Tests
+
+```bash
+# Run SysEx encode/decode tests
+npm test
+
+# Run with verbose debug output
+MONOLOGUE_SYSEX_TEST_DEBUG=1 npm test
+```
+
+---
+
+## 🔧 Development Notes
+
+### Patch Save System (In Progress)
+
+Current implementation includes foundation for patch management:
+
+- SysEx encoding/decoding system
+- Database schema with deduplication
+- API endpoints for patch operations
+- Validation and safety checks
+
+**Next Steps**:
+
+- Connect real hardware SysEx capture
+- Implement patch library UI
+- Add authentication for user patches
+- Enable import/export functionality
+
+### Environment Variables
+
+```bash
+# Database
+DATABASE_URL="postgresql://..."
+DIRECT_URL="postgresql://..."  # For migrations
+
+# Development
+NEXT_PUBLIC_CLASSROOM_MODE="false"  # Enables debug features
+MONOLOGUE_SYSEX_TEST_DEBUG="1"     # Verbose test output
+```
+
+---
+
+## 🤝 Contributing
+
+### Development Workflow
+
+1. Fork the repository
+2. Create a feature branch
+3. Run tests: `npm test && npm run test:playwright`
+4. Submit a pull request
+
+### Code Style
+
+- TypeScript with strict mode
+- Prettier for formatting
+- ESLint for code quality
+- Test-driven development for new features
+
+### Adding New Parameters
+
+1. Update MIDI CC mapping in `midi-cc.ts`
+2. Add UI controls in appropriate panel section
+3. Create E2E tests for the new parameter
+4. Update documentation
+
+---
+
+## 📄 License
+
+MIT License - see LICENSE file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- Korg for the Monologue synthesizer
+- Web MIDI API community
+- Next.js and React teams
+- Playwright testing framework
 
 ---
 
