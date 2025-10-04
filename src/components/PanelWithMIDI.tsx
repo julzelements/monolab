@@ -2,15 +2,9 @@
 
 import { useState, useEffect, useRef } from "react";
 import { MonologueParameters } from "@/lib/sysex/decoder";
-import { ParamState } from "@/types/paramState";
-import { Parameters } from "@/types/ParameterHash";
 import { SimpleMIDIManager } from "@/utils/simple-midi";
 import Panel from "@/components/Panel";
-import {
-  monologueParametersToParamState,
-  paramStateToMonologueParameters,
-  createSetParamViaCallback,
-} from "@/lib/utils/parameter-adapters";
+import { setParameterValue, getParameterValue } from "@/lib/utils/parameter-adapters";
 
 interface PanelWithMIDIProps {
   parameters: MonologueParameters;
@@ -22,7 +16,6 @@ export function PanelWithMIDI({ parameters, onParametersChange, className = "" }
   const [midiManager] = useState(() => SimpleMIDIManager.getInstance());
   const [isMidiInitialized, setIsMidiInitialized] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
-  const [paramState, setParamState] = useState<ParamState>(() => monologueParametersToParamState(parameters));
 
   // Use refs to avoid dependency issues and prevent infinite loops
   const parametersRef = useRef(parameters);
@@ -34,13 +27,6 @@ export function PanelWithMIDI({ parameters, onParametersChange, className = "" }
     parametersRef.current = parameters;
     onParametersChangeRef.current = onParametersChange;
   }, [parameters, onParametersChange]);
-
-  // Update paramState when parameters change from external sources (like hardware dumps)
-  useEffect(() => {
-    if (!isUpdatingFromMidiRef.current) {
-      setParamState(monologueParametersToParamState(parameters));
-    }
-  }, [parameters]);
 
   // Initialize MIDI
   useEffect(() => {
@@ -68,47 +54,21 @@ export function PanelWithMIDI({ parameters, onParametersChange, className = "" }
       if (isUpdatingFromMidiRef.current) return;
 
       const { parameter, value } = event;
-      console.log(`🎛️ MIDI parameter change received: ${parameter} = ${value}`);
-
-      // Find which parameter this corresponds to in our ParamState
-      const parameterEntry = Object.entries(Parameters).find(([, param]) => param.name === parameter);
-      if (!parameterEntry) {
-        if (debugMode) console.log(`⚠️ Unknown parameter: ${parameter}`);
-        return;
+      if (debugMode) {
+        console.log(`🎛️ MIDI parameter change received: ${parameter} = ${value}`);
       }
 
-      const [, paramObj] = parameterEntry;
-      const paramName = paramObj.name as keyof ParamState;
+      // Update the parameter directly using the hierarchical path
+      const updatedParameters = setParameterValue(parametersRef.current, parameter, value);
 
-      if (!paramState[paramName]) {
-        if (debugMode) console.log(`⚠️ Parameter not found in state: ${paramName}`);
-        return;
-      }
+      // Mark that we're updating from MIDI to prevent loops
+      isUpdatingFromMidiRef.current = true;
+      onParametersChangeRef.current(updatedParameters);
 
-      // Update paramState
-      setParamState((prev) => {
-        const updated = {
-          ...prev,
-          [paramName]: {
-            ...prev[paramName],
-            value: value,
-          },
-        };
-
-        // Convert to MonologueParameters and trigger change
-        const updatedMonologueParams = paramStateToMonologueParameters(updated, parametersRef.current);
-
-        // Mark that we're updating from MIDI to prevent loops
-        isUpdatingFromMidiRef.current = true;
-        onParametersChangeRef.current(updatedMonologueParams);
-
-        // Reset the flag after a brief delay
-        setTimeout(() => {
-          isUpdatingFromMidiRef.current = false;
-        }, 50);
-
-        return updated;
-      });
+      // Reset the flag after a brief delay
+      setTimeout(() => {
+        isUpdatingFromMidiRef.current = false;
+      }, 50);
     };
 
     midiManager.on("monologueParameterChange", handleMidiParameterChange);
@@ -116,32 +76,26 @@ export function PanelWithMIDI({ parameters, onParametersChange, className = "" }
     return () => {
       midiManager.off("monologueParameterChange", handleMidiParameterChange);
     };
-  }, [midiManager, isMidiInitialized, paramState, debugMode]);
+  }, [midiManager, isMidiInitialized, debugMode]);
 
-  // Create the callback function for Panel.tsx
-  const setParamViaCallback = createSetParamViaCallback(
-    paramState,
-    (newParamState: ParamState) => {
-      setParamState(newParamState);
+  // Handle parameter changes from the UI
+  const handleParameterChange = async (path: string, value: number) => {
+    // Update parameters
+    const updatedParameters = setParameterValue(parameters, path, value);
+    onParametersChange(updatedParameters);
 
-      // Send MIDI CC when parameter changes from UI
-      Object.entries(newParamState).forEach(async ([paramName, paramStateMap]) => {
-        const prevValue = paramState[paramName as keyof ParamState]?.value;
-        if (prevValue !== paramStateMap.value && isMidiInitialized) {
-          if (debugMode) {
-            console.log(`🎛️ Sending MIDI for parameter: ${paramName} = ${paramStateMap.value}`);
-          }
-          try {
-            await midiManager.sendMonologueParameterChange(paramName, paramStateMap.value);
-          } catch (error) {
-            console.error(`Failed to send MIDI for ${paramName}:`, error);
-          }
-        }
-      });
-    },
-    onParametersChange,
-    parameters
-  );
+    // Send MIDI CC when parameter changes from UI
+    if (isMidiInitialized && !isUpdatingFromMidiRef.current) {
+      if (debugMode) {
+        console.log(`🎛️ Sending MIDI for parameter: ${path} = ${value}`);
+      }
+      try {
+        await midiManager.sendMonologueParameterChange(path, value);
+      } catch (error) {
+        console.error(`Failed to send MIDI for ${path}:`, error);
+      }
+    }
+  };
 
   return (
     <div className={className}>
@@ -156,7 +110,7 @@ export function PanelWithMIDI({ parameters, onParametersChange, className = "" }
         </span>
       </div>
 
-      <Panel setParamViaCallback={setParamViaCallback} paramState={paramState} Parameters={Parameters} />
+      <Panel parameters={parameters} onParameterChange={handleParameterChange} />
     </div>
   );
 }

@@ -1,109 +1,57 @@
 import { MonologueParameters } from "@/lib/sysex/decoder";
-import { ParamState, initialiseParamState, ParameterStateMap } from "@/types/paramState";
-import { Parameters, Parameter } from "@/types/ParameterHash";
 
 /**
- * Converts MonologueParameters to ParamState for the Panel.tsx component
+ * Helper function to get nested parameter value from MonologueParameters
  */
-export function monologueParametersToParamState(params: MonologueParameters): ParamState {
-  return initialiseParamState(params);
+export function getParameterValue(parameters: MonologueParameters, path: string): number {
+  const pathParts = path.split(".");
+  let current: any = parameters;
+
+  for (const part of pathParts) {
+    if (current && typeof current === "object" && part in current) {
+      current = current[part];
+    } else {
+      console.warn(`Parameter path '${path}' not found`);
+      return 0;
+    }
+  }
+
+  return typeof current === "number" ? current : 0;
 }
 
 /**
- * Converts ParamState back to MonologueParameters for persistence and MIDI
+ * Helper function to set nested parameter value in MonologueParameters
  */
-export function paramStateToMonologueParameters(
-  paramState: ParamState,
-  originalParams: MonologueParameters
-): MonologueParameters {
-  return {
-    ...originalParams,
-    isValid: true,
-    drive: paramState.drive.value,
-    oscillators: {
-      vco1: {
-        wave: midiToDiscrete(paramState.vco1Wave.value),
-        shape: paramState.vco1Shape.value,
-        level: paramState.vco1Level.value,
-      },
-      vco2: {
-        wave: midiToDiscrete(paramState.vco2Wave.value),
-        shape: paramState.vco2Shape.value,
-        level: paramState.vco2Level.value,
-        pitch: paramState.vco2Pitch.value,
-        sync: midiToDiscrete(paramState.vco2Duty.value), // Note: duty maps to sync
-        octave: paramState.vco2Octave.value,
-      },
-    },
-    filter: {
-      cutoff: paramState.cutoff.value,
-      resonance: paramState.resonance.value,
-    },
-    envelope: {
-      type: midiToDiscrete(paramState.envType.value),
-      attack: paramState.envAttack.value,
-      decay: paramState.envDecay.value,
-      intensity: paramState.envIntensity.value,
-      target: midiToDiscrete(paramState.envTarget.value),
-    },
-    lfo: {
-      wave: midiToDiscrete(paramState.lfoWave.value),
-      mode: midiToDiscrete(paramState.lfoMode.value),
-      rate: paramState.lfoRate.value,
-      intensity: paramState.lfoIntensity.value,
-      target: midiToDiscrete(paramState.lfoTarget.value),
-    },
-  };
+export function setParameterValue(parameters: MonologueParameters, path: string, value: number): MonologueParameters {
+  const pathParts = path.split(".");
+  const result = JSON.parse(JSON.stringify(parameters)); // Deep clone
+  let current: any = result;
+
+  // Navigate to the parent object
+  for (let i = 0; i < pathParts.length - 1; i++) {
+    const part = pathParts[i];
+    if (!current[part]) {
+      current[part] = {};
+    }
+    current = current[part];
+  }
+
+  // Set the final value
+  const finalKey = pathParts[pathParts.length - 1];
+  current[finalKey] = value;
+
+  return result;
 }
 
 /**
- * Converts MIDI values (0, 64, 127) back to discrete values (0, 1, 2)
- */
-function midiToDiscrete(midiValue: number): number {
-  if (midiValue <= 32) return 0;
-  if (midiValue <= 95) return 1;
-  return 2;
-}
-
-/**
- * Creates a callback function for parameter changes that updates both the ParamState
- * and triggers the MonologueParameters change callback
+ * Creates a parameter change callback that updates MonologueParameters directly
  */
 export function createParameterCallback(
-  parameter: Parameter,
-  paramState: ParamState,
-  setParamState: (state: ParamState) => void,
-  onMonologueParametersChange: (params: MonologueParameters) => void,
-  originalParams: MonologueParameters
+  parameters: MonologueParameters,
+  onParametersChange: (params: MonologueParameters) => void
 ) {
-  return (finalValue: number) => {
-    // Update the specific parameter in ParamState
-    const updatedParamState = {
-      ...paramState,
-      [parameter.name]: {
-        ...paramState[parameter.name as keyof ParamState],
-        value: finalValue,
-      },
-    };
-
-    setParamState(updatedParamState);
-
-    // Convert back to MonologueParameters and trigger change
-    const updatedMonologueParams = paramStateToMonologueParameters(updatedParamState, originalParams);
-    onMonologueParametersChange(updatedMonologueParams);
-  };
-}
-
-/**
- * Creates the setParamViaCallback function expected by Panel.tsx
- */
-export function createSetParamViaCallback(
-  paramState: ParamState,
-  setParamState: (state: ParamState) => void,
-  onMonologueParametersChange: (params: MonologueParameters) => void,
-  originalParams: MonologueParameters
-) {
-  return (parameter: Parameter) => {
-    return createParameterCallback(parameter, paramState, setParamState, onMonologueParametersChange, originalParams);
+  return (path: string, value: number) => {
+    const updatedParameters = setParameterValue(parameters, path, value);
+    onParametersChange(updatedParameters);
   };
 }

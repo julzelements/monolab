@@ -28,6 +28,7 @@ export interface MonologueParameters {
       wave: number; // 0-3 (SAW, TRI, SQR, NOISE)
       shape: number; // 0-1023
       level: number; // 0-1023
+      octave?: number; // 0-3 (16', 8', 4', 2') - MIDI CC only parameter
     };
     vco2: {
       wave: number; // 0-3 (SAW, TRI, SQR, NOISE)

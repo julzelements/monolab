@@ -5,83 +5,86 @@ import { Filter } from "@/components/panelSections/Filter";
 import { VCO2 } from "@/components/panelSections/VCO2";
 import { Envelope } from "@/components/panelSections/Envelope";
 import { LFO } from "@/components/panelSections/LFO";
-import { Parameters as KorgParameters, Parameter } from "@/types/ParameterHash";
-import { ParamState } from "@/types/paramState";
+import { MonologueParameters } from "@/lib/sysex/decoder";
+import { getParameterValue } from "@/lib/utils/parameter-adapters";
 
 const Panel = ({
-  setParamViaCallback,
-  paramState,
-  Parameters,
+  parameters,
+  onParameterChange,
 }: {
-  paramState: ParamState;
-  Parameters: typeof KorgParameters;
-  setParamViaCallback: (parameter: Parameter) => (finalValue: number) => void;
+  parameters: MonologueParameters;
+  onParameterChange: (path: string, value: number) => void;
 }) => {
+  // Create parameter callback function
+  const createParameterCallback = (path: string) => (value: number) => {
+    onParameterChange(path, value);
+  };
+
   return (
     <div className="monologue-container">
       <div className="section-wrapper">
         <div className="panel">
           <div className="panel-controls">
             <Master
-              drive={paramState.drive.value}
-              octave={paramState.vco1Octave.value}
-              onChangeDrive={setParamViaCallback(Parameters.DRIVE)}
-              onChangeOctave={setParamViaCallback(Parameters.VCO1_OCTAVE)}
+              drive={getParameterValue(parameters, "drive")}
+              octave={0} // VCO1 octave - placeholder for future implementation
+              onChangeDrive={createParameterCallback("drive")}
+              onChangeOctave={() => {}} // VCO1 octave - placeholder for future implementation
             />
             <VCO1
-              shape={paramState.vco1Shape.value}
-              wave={paramState.vco1Wave.value}
-              onChangeWave={setParamViaCallback(Parameters.VCO1_WAVE)}
-              onChangeShape={setParamViaCallback(Parameters.VCO1_SHAPE)}
+              shape={getParameterValue(parameters, "oscillators.vco1.shape")}
+              wave={getParameterValue(parameters, "oscillators.vco1.wave")}
+              onChangeWave={createParameterCallback("oscillators.vco1.wave")}
+              onChangeShape={createParameterCallback("oscillators.vco1.shape")}
             />
             <VCO2
-              octave={paramState.vco2Octave.value}
-              pitch={paramState.vco2Pitch.value}
-              wave={paramState.vco2Wave.value}
-              duty={paramState.vco2Duty.value}
-              shape={paramState.vco2Shape.value}
-              onChangeOctave={setParamViaCallback(Parameters.VCO2_OCTAVE)}
-              onChangeWave={setParamViaCallback(Parameters.VCO2_WAVE)}
-              onChangeDuty={setParamViaCallback(Parameters.VCO2_DUTY)}
-              onChangePitch={setParamViaCallback(Parameters.VCO2_PITCH)}
-              onChangeShape={setParamViaCallback(Parameters.VCO2_SHAPE)}
+              octave={getParameterValue(parameters, "oscillators.vco2.octave")}
+              pitch={getParameterValue(parameters, "oscillators.vco2.pitch")}
+              wave={getParameterValue(parameters, "oscillators.vco2.wave")}
+              duty={getParameterValue(parameters, "oscillators.vco2.sync")}
+              shape={getParameterValue(parameters, "oscillators.vco2.shape")}
+              onChangeOctave={createParameterCallback("oscillators.vco2.octave")}
+              onChangeWave={createParameterCallback("oscillators.vco2.wave")}
+              onChangeDuty={createParameterCallback("oscillators.vco2.sync")}
+              onChangePitch={createParameterCallback("oscillators.vco2.pitch")}
+              onChangeShape={createParameterCallback("oscillators.vco2.shape")}
             />
             <Mixer
-              vco1Level={paramState.vco1Level.value}
-              vco2Level={paramState.vco2Level.value}
-              onChangeVCO1LevelValue={setParamViaCallback(Parameters.VCO1_LEVEL)}
-              onChangeVCO2LevelValue={setParamViaCallback(Parameters.VCO2_LEVEL)}
+              vco1Level={getParameterValue(parameters, "oscillators.vco1.level")}
+              vco2Level={getParameterValue(parameters, "oscillators.vco2.level")}
+              onChangeVCO1LevelValue={createParameterCallback("oscillators.vco1.level")}
+              onChangeVCO2LevelValue={createParameterCallback("oscillators.vco2.level")}
             />
             <Filter
-              cutoff={paramState.cutoff.value}
-              resonance={paramState.resonance.value}
-              onChangeCutoff={setParamViaCallback(Parameters.CUTOFF)}
-              onChangeResonance={setParamViaCallback(Parameters.RESONANCE)}
+              cutoff={getParameterValue(parameters, "filter.cutoff")}
+              resonance={getParameterValue(parameters, "filter.resonance")}
+              onChangeCutoff={createParameterCallback("filter.cutoff")}
+              onChangeResonance={createParameterCallback("filter.resonance")}
             />
             <div className="panel-section" id="eglfo">
               <Envelope
-                type={paramState.envType.value}
-                attack={paramState.envAttack.value}
-                decay={paramState.envDecay.value}
-                intensity={paramState.envIntensity.value}
-                target={paramState.envTarget.value}
-                onChangeType={setParamViaCallback(Parameters.ENV_TYPE)}
-                onChangeAttack={setParamViaCallback(Parameters.ENV_ATTACK)}
-                onChangeDecay={setParamViaCallback(Parameters.ENV_DECAY)}
-                onChangeIntensity={setParamViaCallback(Parameters.ENV_INTENSITY)}
-                onChangeTarget={setParamViaCallback(Parameters.ENV_TARGET)}
+                type={getParameterValue(parameters, "envelope.type")}
+                attack={getParameterValue(parameters, "envelope.attack")}
+                decay={getParameterValue(parameters, "envelope.decay")}
+                intensity={getParameterValue(parameters, "envelope.intensity")}
+                target={getParameterValue(parameters, "envelope.target")}
+                onChangeType={createParameterCallback("envelope.type")}
+                onChangeAttack={createParameterCallback("envelope.attack")}
+                onChangeDecay={createParameterCallback("envelope.decay")}
+                onChangeIntensity={createParameterCallback("envelope.intensity")}
+                onChangeTarget={createParameterCallback("envelope.target")}
               />
               <LFO
-                wave={paramState.lfoWave.value}
-                mode={paramState.lfoMode.value}
-                rate={paramState.lfoRate.value}
-                intensity={paramState.lfoIntensity.value}
-                target={paramState.lfoTarget.value}
-                onChangeWave={setParamViaCallback(Parameters.LFO_WAVE)}
-                onChangeMode={setParamViaCallback(Parameters.LFO_MODE)}
-                onChangeRate={setParamViaCallback(Parameters.LFO_RATE)}
-                onChangeIntensity={setParamViaCallback(Parameters.LFO_INTENSITY)}
-                onChangeTarget={setParamViaCallback(Parameters.LFO_TARGET)}
+                wave={getParameterValue(parameters, "lfo.wave")}
+                mode={getParameterValue(parameters, "lfo.mode")}
+                rate={getParameterValue(parameters, "lfo.rate")}
+                intensity={getParameterValue(parameters, "lfo.intensity")}
+                target={getParameterValue(parameters, "lfo.target")}
+                onChangeWave={createParameterCallback("lfo.wave")}
+                onChangeMode={createParameterCallback("lfo.mode")}
+                onChangeRate={createParameterCallback("lfo.rate")}
+                onChangeIntensity={createParameterCallback("lfo.intensity")}
+                onChangeTarget={createParameterCallback("lfo.target")}
               />
             </div>
           </div>
