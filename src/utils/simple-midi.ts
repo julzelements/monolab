@@ -15,7 +15,7 @@ export class SimpleMIDIManager {
   private logRealTimeMessages = false; // Option to log real-time messages
   private selectedInputId: string | null = null;
   private selectedOutputId: string | null = null;
-  private recentOutgoingMessages: Map<string, number> = new Map(); // Track recent outgoing CCs to prevent feedback
+  private updatingFromHardware = new Set<string>(); // Track parameters being updated from hardware to prevent loops
   private lastDebugLogTime: Map<string, number> = new Map(); // Throttle debug output
 
   // Simple storage for raw SysEx dumps
@@ -277,47 +277,34 @@ export class SimpleMIDIManager {
         parameterName: this.getCCParameterName(ccNumber),
       });
 
-      // Improved feedback filtering: distinguish between immediate feedback and hardware input
-      const messageKey = `${ccNumber}:${value}`;
-      const recentTimestamp = this.recentOutgoingMessages.get(messageKey);
-      const now = Date.now();
-
-      if (recentTimestamp && now - recentTimestamp < 10) {
-        // This is very likely immediate feedback from our own message (< 10ms), ignore it
-        this.debugLog(
-          "CONTROL_CHANGE",
-          `Ignoring immediate feedback from recent outgoing CC${ccNumber} = ${value} (${now - recentTimestamp}ms ago)`
-        );
-        this.recentOutgoingMessages.delete(messageKey); // Clean up immediately
-        return;
-      }
-
-      // Clear old entries to prevent blocking legitimate hardware input
-      if (recentTimestamp && now - recentTimestamp >= 10) {
-        this.recentOutgoingMessages.delete(messageKey);
-      }
-
-      // NEW: Comprehensive MIDI CC parameter mapping
+      // Elegant loop prevention: Track parameter source instead of timing
+      // Hardware input is always allowed and should update the UI
       const paramMapping = midiCCToParameter(ccNumber, value);
       if (paramMapping) {
         const { parameter, value: paramValue } = paramMapping;
 
-        this.debugLog("CONTROL_CHANGE", `Mapped CC${ccNumber} to ${parameter} = ${paramValue}`, {
+        this.debugLog("CONTROL_CHANGE", `Hardware input: CC${ccNumber} → ${parameter} = ${paramValue}`, {
           ccNumber,
           midiValue: value,
           parameter,
           parameterValue: paramValue,
         });
 
-        // Emit parameter change event for the new comprehensive system
+        // Mark this parameter as being updated from hardware to prevent echo
+        this.updatingFromHardware.add(parameter);
+
+        // Emit parameter change event for the comprehensive system
         this.emit("monologueParameterChange", {
           parameter,
           value: paramValue,
           ccNumber,
           midiValue: value,
           source: "hardware",
-          timestamp: now,
+          timestamp: Date.now(),
         });
+
+        // Clear the hardware update flag after a short delay to allow UI to update
+        setTimeout(() => this.updatingFromHardware.delete(parameter), 1);
       } else {
         // Fallback to legacy MVP parameter handling for cutoff/resonance
         let parameter: "cutoff" | "resonance" | null = null;
@@ -602,15 +589,12 @@ export class SimpleMIDIManager {
         hex: message.map((b) => "0x" + b.toString(16).padStart(2, "0")).join(" "),
       });
 
-      // Track this outgoing message to prevent feedback loops
-      const messageKey = `${ccNumber}:${clampedValue}`;
-      this.recentOutgoingMessages.set(messageKey, Date.now());
+      // No need to track outgoing messages for timing-based feedback prevention
+      // The source-tracking system handles this elegantly
 
       this.monologueOutput.send(message);
 
       this.debugLog("OUTGOING_MSG", `Successfully sent CC${ccNumber} = ${clampedValue}`);
-
-      // Clean up old outgoing message tracking to prevent memory leaks
       this.cleanupOldOutgoingMessages();
 
       return true;
@@ -623,6 +607,12 @@ export class SimpleMIDIManager {
 
   // NEW: Comprehensive parameter change support for all Monologue parameters
   async sendMonologueParameterChange(parameter: string, value: number): Promise<boolean> {
+    // Elegant loop prevention: Don't send MIDI if parameter is being updated from hardware
+    if (this.updatingFromHardware.has(parameter)) {
+      this.debugLog("LOOP_PREVENTION", `Skipping outgoing MIDI for ${parameter} - currently updating from hardware`);
+      return true; // Return true since this is intentional prevention, not an error
+    }
+
     if (!this.monologueOutput) {
       this.debugLog("WARNING", "Cannot send parameter change - no Monologue output connected");
       console.warn("No Monologue output connected");
@@ -642,7 +632,7 @@ export class SimpleMIDIManager {
       // Send Control Change message: [status, cc_number, value]
       const message = [0xb0, cc, clampedValue]; // Channel 1
 
-      this.debugLog("OUTGOING_MSG", `Sending ${parameter} change`, {
+      this.debugLog("OUTGOING_MSG", `Sending ${parameter} change from UI`, {
         parameter,
         ccNumber: cc,
         value: clampedValue,
@@ -651,16 +641,11 @@ export class SimpleMIDIManager {
         hex: message.map((b) => "0x" + b.toString(16).padStart(2, "0")).join(" "),
       });
 
-      // Track this outgoing message to prevent feedback loops
-      const messageKey = `${cc}:${clampedValue}`;
-      this.recentOutgoingMessages.set(messageKey, Date.now());
+      // No timing-based tracking needed with source-tracking approach
 
       this.monologueOutput.send(message);
 
       this.debugLog("OUTGOING_MSG", `Successfully sent CC${cc} = ${clampedValue} for ${parameter}`);
-
-      // Clean up old outgoing message tracking to prevent memory leaks
-      this.cleanupOldOutgoingMessages();
 
       return true;
     } catch (error) {
@@ -692,9 +677,7 @@ export class SimpleMIDIManager {
         const message = [0xb0, cc, clampedValue]; // Channel 1
 
         try {
-          // Track this outgoing message to prevent feedback loops
-          const messageKey = `${cc}:${clampedValue}`;
-          this.recentOutgoingMessages.set(messageKey, Date.now());
+          // No timing-based tracking needed with source-tracking approach
 
           this.monologueOutput.send(message);
           successCount++;
@@ -706,9 +689,6 @@ export class SimpleMIDIManager {
       }
 
       this.debugLog("OUTGOING_MSG", `Successfully sent ${successCount}/${ccMappings.length} parameter changes`);
-
-      // Clean up old outgoing message tracking to prevent memory leaks
-      this.cleanupOldOutgoingMessages();
 
       return successCount > 0;
     } catch (error) {
@@ -883,16 +863,9 @@ export class SimpleMIDIManager {
   }
 
   private cleanupOldOutgoingMessages() {
+    // Cleanup old debug logs only (no more timing-based message tracking)
     const now = Date.now();
-    const expiredMessages: string[] = [];
     const expiredDebugLogs: string[] = [];
-
-    // Find messages older than 500ms
-    for (const [messageKey, timestamp] of this.recentOutgoingMessages.entries()) {
-      if (now - timestamp > 500) {
-        expiredMessages.push(messageKey);
-      }
-    }
 
     // Find debug logs older than 1 second
     for (const [logKey, timestamp] of this.lastDebugLogTime.entries()) {
@@ -901,10 +874,7 @@ export class SimpleMIDIManager {
       }
     }
 
-    // Remove expired messages and logs
-    for (const messageKey of expiredMessages) {
-      this.recentOutgoingMessages.delete(messageKey);
-    }
+    // Remove expired debug logs
     for (const logKey of expiredDebugLogs) {
       this.lastDebugLogTime.delete(logKey);
     }
