@@ -99,29 +99,25 @@ export function HardwareDumpHandler({ onPatchReceived, className = "" }: Hardwar
   };
 
   return (
-    <div className={`p-4 border rounded-lg bg-white shadow-sm ${className}`}>
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold">🎛️ Hardware Sync</h3>
-        <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-500" : "bg-red-500"}`}></div>
-          <span className="text-sm text-gray-600">{isConnected ? "Monologue Connected" : "Not Connected"}</span>
+    <div className={`hardware-dump-handler ${className}`}>
+      <div className="hardware-dump-header">
+        <h3>🎛️ Hardware Sync</h3>
+        <div className="hardware-dump-status">
+          <div className={`status-dot ${isConnected ? "connected" : "disconnected"}`}></div>
+          <span>{isConnected ? "Monologue Connected" : "Not Connected"}</span>
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div>
         {/* Main Action Button */}
         <button
           onClick={requestDumpFromHardware}
           disabled={isWaitingForDump || !isConnected}
-          className={`w-full px-4 py-3 rounded-lg font-medium transition-colors ${
-            isWaitingForDump || !isConnected
-              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-              : "bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800"
-          }`}
+          className={`hardware-dump-button ${isWaitingForDump || !isConnected ? "disabled" : "enabled"}`}
         >
           {isWaitingForDump ? (
-            <span className="flex items-center justify-center gap-2">
-              <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+            <span className="hardware-dump-loading">
+              <div className="spinner"></div>
               Waiting for Hardware...
             </span>
           ) : (
@@ -131,9 +127,9 @@ export function HardwareDumpHandler({ onPatchReceived, className = "" }: Hardwar
 
         {/* Instructions */}
         {isWaitingForDump && (
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-800 font-medium mb-2">📋 How to send patch from Monologue:</p>
-            <ol className="text-sm text-blue-700 space-y-1 ml-4 list-decimal">
+          <div className="info-box blue">
+            <p>📋 How to send patch from Monologue:</p>
+            <ol>
               <li>
                 Press and hold <strong>WRITE</strong> button
               </li>
@@ -148,38 +144,32 @@ export function HardwareDumpHandler({ onPatchReceived, className = "" }: Hardwar
 
         {/* Status Messages */}
         {error && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg flex items-start justify-between">
+          <div className="info-box red">
             <div>
-              <p className="text-sm text-red-800 font-medium">❌ Error</p>
-              <p className="text-sm text-red-700">{error}</p>
+              <p className="error-title">❌ Error</p>
+              <p>{error}</p>
             </div>
-            <button onClick={clearStatus} className="text-red-500 hover:text-red-700 ml-2">
-              ✕
-            </button>
+            <button onClick={clearStatus}>✕</button>
           </div>
         )}
 
         {lastDumpTime && !error && (
-          <div className="p-3 bg-green-50 border border-green-200 rounded-lg flex items-start justify-between">
+          <div className="info-box green">
             <div>
-              <p className="text-sm text-green-800 font-medium">✅ Patch Received</p>
-              <p className="text-sm text-green-700">
+              <p className="success-title">✅ Patch Received</p>
+              <p>
                 <strong>"{lastPatchName}"</strong> loaded at {lastDumpTime.toLocaleTimeString()}
               </p>
             </div>
-            <button onClick={clearStatus} className="text-green-500 hover:text-green-700 ml-2">
-              ✕
-            </button>
+            <button onClick={clearStatus}>✕</button>
           </div>
         )}
 
         {/* Help Text */}
         {!isConnected && (
-          <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p className="text-sm text-yellow-800 font-medium">⚠️ MIDI Setup Required</p>
-            <p className="text-sm text-yellow-700 mt-1">
-              Connect your Korg Monologue via USB or MIDI interface and refresh the page.
-            </p>
+          <div className="info-box yellow">
+            <p>⚠️ MIDI Setup Required</p>
+            <p>Connect your Korg Monologue via USB or MIDI interface and refresh the page.</p>
           </div>
         )}
       </div>

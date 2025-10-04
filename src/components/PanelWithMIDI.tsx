@@ -146,21 +146,12 @@ export function PanelWithMIDI({ parameters, onParametersChange, className = "" }
   return (
     <div className={className}>
       {/* Debug toggle */}
-      <div className="mb-4 flex items-center space-x-2">
-        <label className="flex items-center space-x-2 text-sm">
-          <input
-            type="checkbox"
-            checked={debugMode}
-            onChange={(e) => setDebugMode(e.target.checked)}
-            className="rounded"
-          />
+      <div className="panel-controls-header">
+        <label className="debug-toggle">
+          <input type="checkbox" checked={debugMode} onChange={(e) => setDebugMode(e.target.checked)} />
           <span>Debug MIDI</span>
         </label>
-        <span
-          className={`text-xs px-2 py-1 rounded ${
-            isMidiInitialized ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"
-          }`}
-        >
+        <span className={`midi-status-badge ${isMidiInitialized ? "connected" : "disconnected"}`}>
           MIDI: {isMidiInitialized ? "Connected" : "Disconnected"}
         </span>
       </div>

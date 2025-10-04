@@ -86,26 +86,23 @@ export function Navigation() {
   };
 
   return (
-    <nav className="bg-white border-b border-gray-200 px-4 py-3">
-      <div className="max-w-7xl mx-auto flex items-center justify-between">
+    <nav>
+      <div className="nav-container">
         {/* Logo/Title */}
-        <div className="flex items-center space-x-4">
-          <h1 className="text-xl font-bold text-blue-600">Monolab</h1>
-          <span className="text-sm text-gray-500">MVP</span>
+        <div className="nav-logo">
+          <h1>Monolab</h1>
+          <span>MVP</span>
         </div>
 
         {/* MIDI Device Selection */}
-        <div className="flex items-center space-x-6">
+        <div className="nav-controls">
           {/* MIDI Input Selection */}
-          <div className="flex items-center space-x-2">
-            <label htmlFor="midi-input" className="text-sm font-medium text-gray-700">
-              MIDI Input:
-            </label>
+          <div className="nav-control-group">
+            <label htmlFor="midi-input">MIDI Input:</label>
             <select
               id="midi-input"
               value={deviceSelection.selectedInputId || ""}
               onChange={handleInputSelection}
-              className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               disabled={!isInitialized}
             >
               <option value="">No Input</option>
@@ -118,15 +115,12 @@ export function Navigation() {
           </div>
 
           {/* MIDI Output Selection */}
-          <div className="flex items-center space-x-2">
-            <label htmlFor="midi-output" className="text-sm font-medium text-gray-700">
-              MIDI Output:
-            </label>
+          <div className="nav-control-group">
+            <label htmlFor="midi-output">MIDI Output:</label>
             <select
               id="midi-output"
               value={deviceSelection.selectedOutputId || ""}
               onChange={handleOutputSelection}
-              className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               disabled={!isInitialized}
             >
               <option value="">No Output</option>
@@ -139,36 +133,26 @@ export function Navigation() {
           </div>
 
           {/* Refresh Button */}
-          <button
-            onClick={refreshDevices}
-            className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-md transition-colors"
-            title="Refresh MIDI devices"
-          >
+          <button onClick={refreshDevices} title="Refresh MIDI devices">
             🔄
           </button>
 
           {/* MIDI Status Indicator */}
-          <div className="flex items-center space-x-2">
+          <div className="nav-control-group">
             <div
-              className={`w-3 h-3 rounded-full ${isInitialized ? "bg-green-500" : "bg-red-500"}`}
+              className={`status-indicator ${isInitialized ? "status-green" : "status-red"}`}
               title={isInitialized ? "MIDI Initialized" : "MIDI Not Available"}
             />
-            <span className="text-xs text-gray-500">{isInitialized ? "MIDI Ready" : "MIDI Init..."}</span>
+            <span className="status-text">{isInitialized ? "MIDI Ready" : "MIDI Init..."}</span>
           </div>
         </div>
       </div>
 
       {/* Device Count Info & Auto-selection Status */}
       {isInitialized && (
-        <div className="max-w-7xl mx-auto mt-2 flex justify-between items-center">
-          <div>
-            {autoSelectionStatus && (
-              <div className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded border border-green-200">
-                ✓ {autoSelectionStatus}
-              </div>
-            )}
-          </div>
-          <div className="text-xs text-gray-500">
+        <div className="nav-info">
+          <div>{autoSelectionStatus && <div className="auto-selection-status">✓ {autoSelectionStatus}</div>}</div>
+          <div className="status-text">
             {deviceSelection.availableInputs.length} input(s), {deviceSelection.availableOutputs.length} output(s)
             available
           </div>
