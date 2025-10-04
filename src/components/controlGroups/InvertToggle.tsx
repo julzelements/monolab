@@ -3,10 +3,10 @@ import { memo } from "react";
 
 interface InvertToggleProps {
   paramName: string;
-  testId?: string; // Optional unique test ID
   isInverted: boolean;
   onToggle: () => void;
   invertedColor?: string;
+  testId?: string; // Optional test ID override
 }
 
 const InvertToggle = memo((props: InvertToggleProps) => {

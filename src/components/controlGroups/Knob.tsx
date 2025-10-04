@@ -19,6 +19,7 @@ interface KnobProps {
   value: number;
   invertible?: boolean;
   onChange: (newValue: number) => void;
+  testId?: string; // Optional test ID override
 }
 
 const isClassroomMode = process.env.NEXT_PUBLIC_CLASSROOM_MODE === "true";
@@ -94,7 +95,7 @@ const Knob = memo((props: KnobProps) => {
             className={`knob-value ${active && isClassroomMode ? "knob-glow" : ""}`}
             style={knobStyle}
             onMouseDown={startDrag}
-            data-testid={props.paramName}
+            data-testid={props.testId || props.paramName}
           >
             <div className="knob-value-inner" style={knobInnerStyle} />
           </div>

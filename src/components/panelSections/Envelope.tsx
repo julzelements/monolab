@@ -40,13 +40,14 @@ export const Envelope = (props: EnvelopeProps) => {
           onChange={props.onChangeIntensity}
           invertible={true}
           invertedColor="orange"
+          testId="envelope-int-knob"
         />
         <InvertToggle
           paramName="Int"
-          testId="envelope-int-invert-toggle"
           isInverted={props.intensity < 0}
           onToggle={() => props.onIntensityInvertChange && props.onIntensityInvertChange(props.intensity >= 0)}
           invertedColor="orange"
+          testId="envelope-int-toggle"
         />
       </div>
       <SwitchContainer

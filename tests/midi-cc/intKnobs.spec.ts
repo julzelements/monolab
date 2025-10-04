@@ -11,8 +11,8 @@ test.describe("INT Knobs - Envelope and LFO Intensity", () => {
   });
 
   test.describe("Envelope INT Knob", () => {
-    const egIntKnobSelector = '#eglfo .panel-group:nth-of-type(1) [data-testid="Int"]';
-    const egToggleSelector = '[data-testid="envelope-int-invert-toggle"]';
+    const egIntKnobSelector = '[data-testid="envelope-int-knob"]';
+    const egToggleSelector = '[data-testid="envelope-int-toggle"]';
 
     test("should start at center position and send MIDI CC 64", async () => {
       await midiTestPage.clearMIDIMessages();
@@ -27,50 +27,57 @@ test.describe("INT Knobs - Envelope and LFO Intensity", () => {
     });
 
     test("should toggle between NORM and INV states", async () => {
+      // First move the knob away from zero so toggle behavior is visible
+      await midiTestPage.setKnobToPosition(egIntKnobSelector, "max");
+
       // Check initial state
       const toggleButton = midiTestPage.page.locator(egToggleSelector);
       await expect(toggleButton).toBeVisible();
+
+      // Get initial text and log it
+      const initialText = await toggleButton.textContent();
+      console.log(`Initial toggle text: ${initialText}`);
       await expect(toggleButton).toHaveText("NORM");
 
       // Click to toggle to INV
       await toggleButton.click();
       await midiTestPage.page.waitForTimeout(100); // Give time for state update
+
+      const afterClickText = await toggleButton.textContent();
+      console.log(`After click text: ${afterClickText}`);
       await expect(toggleButton).toHaveText("INV");
 
       // Click again to toggle back to NORM
       await toggleButton.click();
       await midiTestPage.page.waitForTimeout(100); // Give time for state update
+
+      const finalText = await toggleButton.textContent();
+      console.log(`Final text: ${finalText}`);
       await expect(toggleButton).toHaveText("NORM");
     });
 
     test("should handle minimum position correctly", async () => {
       await midiTestPage.clearMIDIMessages();
 
-      // Set to minimum position (should send MIDI CC close to 0)
+      // Set to minimum position (should send MIDI CC 0)
       await midiTestPage.setKnobToPosition(egIntKnobSelector, "min");
 
       const messages = await midiTestPage.getOutgoingMIDIMessages();
       const egMessages = messages.filter((msg) => msg.cc === 25);
       expect(egMessages.length).toBeGreaterThan(0);
-
-      // Allow some tolerance for knob positioning
-      const lastValue = egMessages[egMessages.length - 1].value;
-      expect(lastValue).toBeLessThanOrEqual(20); // Should be close to 0
+      expect(egMessages[egMessages.length - 1].value).toBe(0);
     });
 
     test("should handle maximum position correctly", async () => {
       await midiTestPage.clearMIDIMessages();
 
-      // Set to maximum position (should send MIDI CC close to 127)
+      // Set to maximum position (should send MIDI CC 127)
       await midiTestPage.setKnobToPosition(egIntKnobSelector, "max");
 
       const messages = await midiTestPage.getOutgoingMIDIMessages();
       const egMessages = messages.filter((msg) => msg.cc === 25);
       expect(egMessages.length).toBeGreaterThan(0);
-
-      // Allow some tolerance for knob positioning
-      const lastValue = egMessages[egMessages.length - 1].value;
-      expect(lastValue).toBeGreaterThanOrEqual(107); // Should be close to 127
+      expect(egMessages[egMessages.length - 1].value).toBe(127);
     });
 
     test("should send correct MIDI CC when rotated (NORM mode)", async () => {
@@ -93,14 +100,11 @@ test.describe("INT Knobs - Envelope and LFO Intensity", () => {
       const egMessages = messages.filter((msg) => msg.cc === 25);
       expect(egMessages.length).toBeGreaterThanOrEqual(3);
 
-      // Check that we get a range of values from low to high
+      // Should have sent values corresponding to min (0), mid (64), max (127)
       const values = egMessages.map((msg) => msg.value);
-      const minValue = Math.min(...values);
-      const maxValue = Math.max(...values);
-
-      expect(minValue).toBeLessThanOrEqual(20); // Should have a low value
-      expect(maxValue).toBeGreaterThanOrEqual(107); // Should have a high value
-      expect(values).toContain(64); // Should have center value
+      expect(values).toContain(0); // min position
+      expect(values).toContain(64); // center position
+      expect(values).toContain(127); // max position
     });
 
     test("should send correct MIDI CC when rotated (INV mode)", async () => {
@@ -160,8 +164,8 @@ test.describe("INT Knobs - Envelope and LFO Intensity", () => {
   });
 
   test.describe("LFO INT Knob", () => {
-    const lfoIntKnobSelector = '#eglfo .panel-group:nth-of-type(2) [data-testid="Int"]';
-    const lfoToggleSelector = '[data-testid="lfo-int-invert-toggle"]';
+    const lfoIntKnobSelector = '[data-testid="lfo-int-knob"]';
+    const lfoToggleSelector = '[data-testid="lfo-int-toggle"]';
 
     test("should start at center position and send MIDI CC 64", async () => {
       await midiTestPage.clearMIDIMessages();
@@ -176,6 +180,9 @@ test.describe("INT Knobs - Envelope and LFO Intensity", () => {
     });
 
     test("should toggle between NORM and INV states", async () => {
+      // First move the knob away from zero so toggle behavior is visible
+      await midiTestPage.setKnobToPosition(lfoIntKnobSelector, "max");
+
       // Check initial state
       const toggleButton = midiTestPage.page.locator(lfoToggleSelector);
       await expect(toggleButton).toHaveText("NORM");
@@ -192,16 +199,13 @@ test.describe("INT Knobs - Envelope and LFO Intensity", () => {
     test("should handle maximum position correctly", async () => {
       await midiTestPage.clearMIDIMessages();
 
-      // Set to maximum position (should send MIDI CC close to 127)
+      // Set to maximum position (should send MIDI CC 127)
       await midiTestPage.setKnobToPosition(lfoIntKnobSelector, "max");
 
       const messages = await midiTestPage.getOutgoingMIDIMessages();
       const lfoMessages = messages.filter((msg) => msg.cc === 26);
       expect(lfoMessages.length).toBeGreaterThan(0);
-
-      // Allow some tolerance for knob positioning
-      const lastValue = lfoMessages[lfoMessages.length - 1].value;
-      expect(lastValue).toBeGreaterThanOrEqual(107); // Should be close to 127
+      expect(lfoMessages[lfoMessages.length - 1].value).toBe(127);
     });
 
     test("should send correct MIDI CC when rotated (NORM mode)", async () => {
@@ -224,14 +228,11 @@ test.describe("INT Knobs - Envelope and LFO Intensity", () => {
       const lfoMessages = messages.filter((msg) => msg.cc === 26);
       expect(lfoMessages.length).toBeGreaterThanOrEqual(3);
 
-      // Check that we get a range of values from low to high
+      // Should have sent values corresponding to min (0), mid (64), max (127)
       const values = lfoMessages.map((msg) => msg.value);
-      const minValue = Math.min(...values);
-      const maxValue = Math.max(...values);
-
-      expect(minValue).toBeLessThanOrEqual(20); // Should have a low value
-      expect(maxValue).toBeGreaterThanOrEqual(107); // Should have a high value
-      expect(values).toContain(64); // Should have center value
+      expect(values).toContain(0); // min position
+      expect(values).toContain(64); // center position
+      expect(values).toContain(127); // max position
     });
 
     test("should send correct MIDI CC when rotated (INV mode)", async () => {
@@ -265,7 +266,7 @@ test.describe("INT Knobs - Envelope and LFO Intensity", () => {
 
   test.describe("MIDI Input to INT Knobs", () => {
     test("should respond to incoming EG_INT MIDI CC messages", async () => {
-      const egIntKnobSelector = '#eglfo .panel-group:nth-of-type(1) [data-testid="Int"]';
+      const egIntKnobSelector = '[data-testid="envelope-int-knob"]';
 
       await midiTestPage.clearMIDIMessages();
 
@@ -288,7 +289,7 @@ test.describe("INT Knobs - Envelope and LFO Intensity", () => {
     });
 
     test("should respond to incoming LFO_INT MIDI CC messages", async () => {
-      const lfoIntKnobSelector = '#eglfo .panel-group:nth-of-type(2) [data-testid="Int"]';
+      const lfoIntKnobSelector = '[data-testid="lfo-int-knob"]';
 
       await midiTestPage.clearMIDIMessages();
 

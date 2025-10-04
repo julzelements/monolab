@@ -40,14 +40,15 @@ export const LFO = (props: LFOProps) => {
           value={props.intensity}
           onChange={props.onChangeIntensity}
           invertible={true}
-          invertedColor="orange"
+          invertedColor="yellow"
+          testId="lfo-int-knob"
         />
         <InvertToggle
           paramName="Int"
-          testId="lfo-int-invert-toggle"
           isInverted={props.intensity < 0}
           onToggle={() => props.onIntensityInvertChange && props.onIntensityInvertChange(props.intensity >= 0)}
-          invertedColor="orange"
+          invertedColor="yellow"
+          testId="lfo-int-toggle"
         />
       </div>
       <SwitchContainer
