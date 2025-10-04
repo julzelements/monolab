@@ -14,7 +14,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className={inter.className}>
-        <div style={{ minHeight: '100vh', background: 'var(--control-value-background)' }}>
+        <div style={{ minHeight: "100vh", background: "var(--control-value-background)" }}>
           <Navigation />
           <main>{children}</main>
         </div>
