@@ -2,52 +2,52 @@
 
 ## Basic Parameters
 
-### MASTER
+### Master
 
-- DRIVE
+- Drive
 
 ### VCO 1
 
-- WAVE
-- SHAPE
+- Wave
+- Shape
 
 ### VCO 2
 
-- OCTAVE
-- WAVE
-- SYNC/RING
-- SHAPE
+- Octave
+- Wave
+- Sync/Ring
+- Shape
 
-### MIXER
+### Mixer
 
 - VCO1
 - VCO2
 
-### FILTER
+### Filter
 
-- CUTOFF
-- RESONANCE
+- Cutoff
+- Resonance
 
 ### EG
 
-- TYPE
-- ATTACK
-- DECAY
-- INT
-- TARGET
+- Type
+- Attack
+- Decay
+- Int
+- Target
 
 ### LFO
 
-- WAVE
-- MODE
-- RATE
-- INT
-- TARGET
+- Wave
+- Mode
+- Rate
+- Int
+- Target
 
 ### LSEQ
 
-- TEMPO
-- KEY TRG/HOLD
+- Tempo
+- Key Trg/Hold
 
 ## Detailed Parameters
 
