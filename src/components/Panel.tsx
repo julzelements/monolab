@@ -7,6 +7,7 @@ import { Envelope } from "@/components/panelSections/Envelope";
 import { LFO } from "@/components/panelSections/LFO";
 import { MonologueParameters } from "@/lib/sysex/decoder";
 import { getParameterValue } from "@/lib/utils/parameter-adapters";
+import { useState } from "react";
 
 const Panel = ({
   parameters,
@@ -15,6 +16,8 @@ const Panel = ({
   parameters: MonologueParameters;
   onParameterChange: (path: string, value: number) => void;
 }) => {
+  const [isToolbarOpen, setIsToolbarOpen] = useState(false);
+
   // Create parameter callback function
   const createParameterCallback = (path: string) => (value: number) => {
     onParameterChange(path, value);
@@ -26,6 +29,10 @@ const Panel = ({
     const absValue = Math.abs(currentValue);
     const newValue = isInverted ? -absValue : absValue;
     onParameterChange(path, newValue);
+  };
+
+  const toggleToolbar = () => {
+    setIsToolbarOpen(!isToolbarOpen);
   };
 
   return (
@@ -99,9 +106,49 @@ const Panel = ({
             </div>
           </div>
         </div>
+
+        {/* Toolbar Container */}
+        <div className="toolbar-container">
+          {/* Toolbar Toggle Button */}
+          <div className="toolbar-toggle">
+            <button
+              onClick={toggleToolbar}
+              className="toolbar-toggle-btn"
+              aria-label={isToolbarOpen ? "Close toolbar" : "Open toolbar"}
+            >
+              <svg
+                className={`chevron ${isToolbarOpen ? "chevron-up" : "chevron-down"}`}
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <polyline points="6,9 12,15 18,9"></polyline>
+              </svg>
+            </button>
+          </div>
+
+          {/* Slide-out Toolbar */}
+          <div className={`toolbar ${isToolbarOpen ? "toolbar-open" : "toolbar-closed"}`}>
+            <div className="toolbar-content">
+              <div className="toolbar-section">
+                <button className="toolbar-btn">📥 Load Patch</button>
+                <button className="toolbar-btn">💾 Save Patch</button>
+                <button className="toolbar-btn">📋 Copy Settings</button>
+                <button className="toolbar-btn">📂 Library</button>
+              </div>
+              <div className="toolbar-section">
+                <button className="toolbar-btn">� Reset</button>
+                <button className="toolbar-btn">� Share</button>
+                <button className="toolbar-btn">⚙️ Settings</button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
-
 export default Panel;

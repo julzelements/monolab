@@ -45,6 +45,12 @@
   width: 37px;
 }
 
+/* Section wrapper for panel with toolbar */
+.section-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
 .panel-section {
   border-left: 1px solid black;
 }
@@ -67,11 +73,11 @@
   font-size: 10px;
   font-weight: 500;
   text-align: center;
-  margin: 1em auto;
+  margin: 1em auto 0 auto;
   padding: 1em 3em;
   background-color: #dfdbdd;
   width: 880px;
-  border-radius: 15px;
+  border-radius: 15px 15px 0 0;
 }
 
 .panel-group-label {
@@ -678,4 +684,121 @@ input[type="text"]:focus {
 .midi-status-badge.disconnected {
   background-color: #f3f4f6;
   color: #6b7280;
+}
+
+/* Toolbar container - shared container for button and toolbar */
+.toolbar-container {
+  position: relative;
+  background: #dfdbdd;
+  border-radius: 0 0 15px 15px;
+}
+
+/* Toolbar styles */
+.toolbar-toggle {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  background: #dfdbdd;
+  border-top: 1px solid #bcb6ba;
+  border-radius: 0 0 15px 15px;
+  z-index: 10;
+}
+
+.toolbar-toggle-btn {
+  background: none;
+  border: none;
+  padding: 8px 16px;
+  cursor: pointer;
+  color: #333;
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toolbar-toggle-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.chevron {
+  transition: transform 0.3s ease;
+}
+
+.chevron-up {
+  transform: rotate(180deg);
+}
+
+.chevron-down {
+  transform: rotate(0deg);
+}
+
+/* Toolbar container */
+.toolbar {
+  overflow: hidden;
+  background: #dfdbdd;
+  border-radius: 0 0 15px 15px;
+  transition: max-height 0.3s ease-in-out;
+}
+
+.toolbar-closed {
+  max-height: 0;
+}
+
+.toolbar-open {
+  max-height: 200px; /* Adjust based on your content height */
+}
+
+.toolbar-content {
+  padding: 16px;
+  display: flex;
+  gap: 24px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.toolbar-section {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.toolbar-btn {
+  background: #c8c3c6;
+  border: 1px solid #bcb6ba;
+  color: #333;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: "Raleway", sans-serif;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+.toolbar-btn:hover {
+  background: #b8b2b6;
+  border-color: #a8a2a6;
+}
+
+.toolbar-btn:active {
+  transform: translateY(1px);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .toolbar-content {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .toolbar-section {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .toolbar-open {
+    max-height: 300px; /* More height needed for mobile layout */
+  }
 }
