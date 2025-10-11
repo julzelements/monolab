@@ -125,7 +125,7 @@ export function parameterToMidiCC(parameter: string, value: number): { cc: numbe
     case "oscillators.vco2.level":
       return { cc: MIDI_CC.VCO_2_LEVEL, midiValue: Math.round((value / 1023) * 127) };
     case "oscillators.vco2.pitch":
-      return { cc: MIDI_CC.VCO_2_PITCH, midiValue: Math.round((value / 1023) * 127) }; // 0-1023 range
+      return { cc: MIDI_CC.VCO_2_PITCH, midiValue: Math.round(((value + 512) / 1024) * 127) }; // -512 to +511 range (bipolar in cents)
     case "envelope.attack":
       return { cc: MIDI_CC.AMP_EG_ATTACK, midiValue: Math.round((value / 1023) * 127) };
     case "envelope.decay":
@@ -183,7 +183,7 @@ export function midiCCToParameter(cc: number, midiValue: number): { parameter: s
     case MIDI_CC.VCO_2_LEVEL:
       return { parameter: "oscillators.vco2.level", value: Math.round((midiValue / 127) * 1023) };
     case MIDI_CC.VCO_2_PITCH:
-      return { parameter: "oscillators.vco2.pitch", value: Math.round((midiValue / 127) * 1023) }; // 0-1023 range
+      return { parameter: "oscillators.vco2.pitch", value: Math.round((midiValue / 127) * 1024) - 512 }; // Convert to -512 to +511 (bipolar)
     case MIDI_CC.AMP_EG_ATTACK:
       return { parameter: "envelope.attack", value: Math.round((midiValue / 127) * 1023) };
     case MIDI_CC.AMP_EG_DECAY:
