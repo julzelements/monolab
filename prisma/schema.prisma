@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -8,7 +5,6 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  // directUrl = env("DIRECT_URL") // For Supabase connection pooling - disabled for local dev
 }
 
 model User {
@@ -17,108 +13,34 @@ model User {
   name      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  patches Patch[]
-  banks   Bank[]
-  favorites UserPatchFavorite[]
+  patches   Patch[]
 
   @@map("users")
 }
 
 model Patch {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  tags        String[] @default([])
-  
-  // Patch metadata
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  version     Int      @default(1)
-  isPublic    Boolean  @default(false)
-  
-  // Author information
-  authorId    String?
-  author      User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
-  authorName  String?  // For patches shared without account
-  
-  // SysEx data (raw MIDI data)
-  sysexData   Bytes
-  // Hash of raw SysEx (deduplication, fast lookup) - SHA256 hex
-  sysexHash   String   @unique
-  
-  // Parsed parameters for easier querying and UI
-  parameters  Json
-
-  // Fork lineage (optional reference to original patch)
+  id            String    @id @default(cuid())
+  name          String
+  description   String?
+  tags          String[]  @default([])
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  version       Int       @default(1)
+  isPublic      Boolean   @default(false)
+  authorId      String?
+  authorName    String?
+  sysexData     Bytes
+  sysexHash     String    @unique
+  parameters    Json
   sourcePatchId String?
-  sourcePatch   Patch? @relation("PatchSource", fields: [sourcePatchId], references: [id], onDelete: SetNull)
-  forks         Patch[] @relation("PatchSource")
-  
-  // Organization
-  bankId      String?
-  bank        Bank?    @relation(fields: [bankId], references: [id], onDelete: SetNull)
-  bankSlot    Int?     // Position within bank (0-99 for Monologue)
-  
-  // Usage tracking
-  downloadCount Int    @default(0)
-  favoriteCount Int    @default(0)
-  
-  // Sharing
-  shareToken    String? @unique // For URL sharing
+  downloadCount Int       @default(0)
+  favoriteCount Int       @default(0)
+  shareToken    String?   @unique
   sharedAt      DateTime?
-
-  // Soft delete
   deletedAt     DateTime?
+  author        User?     @relation(fields: [authorId], references: [id])
+  sourcePatch   Patch?    @relation("PatchSource", fields: [sourcePatchId], references: [id])
+  forks         Patch[]   @relation("PatchSource")
 
-  favorites     UserPatchFavorite[]
-  
-  @@unique([bankId, bankSlot]) // Prevent slot conflicts within bank
   @@map("patches")
-}
-
-model Bank {
-  id          String   @id @default(cuid())
-  name        String
-  description String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
-  authorId    String?
-  author      User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
-  
-  patches     Patch[]
-  
-  @@map("banks")
-}
-
-model UserPatchFavorite {
-  id      String @id @default(cuid())
-  userId  String
-  patchId String
-  
-  user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  patch   Patch  @relation(fields: [patchId], references: [id], onDelete: Cascade)
-  
-  createdAt DateTime @default(now())
-  
-  @@unique([userId, patchId])
-  @@map("user_patch_favorites")
-}
-
-// For storing device configurations
-model DeviceConfig {
-  id              String   @id @default(cuid())
-  userId          String?
-  name            String
-  midiInputPort   String?
-  midiOutputPort  String?
-  deviceType      String   @default("monologue")
-  isDefault       Boolean  @default(false)
-  settings        Json     @default("{}")
-  
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  
-  @@map("device_configs")
 }

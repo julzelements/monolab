@@ -6,22 +6,19 @@ const prisma = new PrismaClient();
 async function main() {
   console.log("Seeding database...");
 
-  // Create a sample user
-  const user = await prisma.user.create({
-    data: {
-      email: "demo@monolab.app",
-      name: "Demo User",
-    },
+  // Create or get existing sample user
+  let user = await prisma.user.findUnique({
+    where: { email: "demo@monolab.app" },
   });
 
-  // Create a sample bank
-  const bank = await prisma.bank.create({
-    data: {
-      name: "Factory Presets",
-      description: "Default Monologue factory presets",
-      authorId: user.id,
-    },
-  });
+  if (!user) {
+    user = await prisma.user.create({
+      data: {
+        email: "demo@monolab.app",
+        name: "Demo User",
+      },
+    });
+  }
 
   // Create sample patches with mock SysEx data
   const patches = [
@@ -36,8 +33,6 @@ async function main() {
         eg: { attack: 0, decay: 64, sustain: 127, release: 64 },
         lfo: { rate: 64, intensity: 0, target: "pitch", wave: "triangle" },
       },
-      bankId: bank.id,
-      bankSlot: 0,
     },
     {
       name: "Lead Saw",
@@ -50,8 +45,6 @@ async function main() {
         eg: { attack: 10, decay: 40, sustain: 80, release: 30 },
         lfo: { rate: 80, intensity: 16, target: "cutoff", wave: "triangle" },
       },
-      bankId: bank.id,
-      bankSlot: 1,
     },
     {
       name: "Bass Pulse",
@@ -64,13 +57,13 @@ async function main() {
         eg: { attack: 0, decay: 80, sustain: 40, release: 20 },
         lfo: { rate: 60, intensity: 32, target: "pulse_width", wave: "triangle" },
       },
-      bankId: bank.id,
-      bankSlot: 2,
     },
   ];
 
   for (const patchData of patches) {
     // Mock SysEx data - in real implementation this would be actual MIDI data
+    // Make each patch unique by varying one byte
+    const patchIndex = patches.indexOf(patchData);
     const mockSysEx = Buffer.from([
       0xf0,
       0x42,
@@ -82,7 +75,7 @@ async function main() {
       0x00, // Header
       ...Array(256)
         .fill(0)
-        .map((_, i) => i % 128), // Parameter data
+        .map((_, i) => (i + patchIndex) % 128), // Parameter data (varied per patch)
       0xf7, // End of SysEx
     ]);
 
