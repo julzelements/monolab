@@ -120,3 +120,5 @@ Choose the appropriate parser based on your requirements:
 
 - **Light & Fast**: `monologue-parser.ts` for VCF controls
 - **Complete & Future-Ready**: `decoder.ts` for comprehensive access
+
+## Mapping specs
