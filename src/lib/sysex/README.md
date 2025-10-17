@@ -19,14 +19,6 @@ Complete encoder/decoder system for Korg Monologue SysEx data with dual-parser a
 - Bit manipulation utilities for high-bit packing/unpacking
 - Validation functions for data integrity
 
-#### 🎛️ MVP Parameter Parser (`monologue-parser.ts`)
-
-- **Purpose**: Lightweight VCF controls + patch names for production UI
-- **Interface**: `MonologueVCFParams` (cutoff, resonance, patch name)
-- **Size**: 90 lines - optimized for minimal footprint
-- **Usage**: Currently used by `MonologueEditor` and `SimpleMIDIManager`
-- **Test Status**: ✅ 9/9 tests passing
-
 #### 🎹 Comprehensive Parameter Decoder (`decoder.ts`)
 
 - **Purpose**: Complete MIDI spec implementation for full parameter access
@@ -41,23 +33,11 @@ Complete encoder/decoder system for Korg Monologue SysEx data with dual-parser a
 - **Status**: ✅ Fully integrated into `encoder.ts` (all test dumps pass)
 - **Implementation**: Shares bit helpers from `utilities.ts`
 
-#### 🧪 Validation & Diff Helpers
+#### 🧪 Validation Helpers
 
 - `validateMonologueParameters(params)` → Non-throwing validation result before encoding
-- `diffMonologueParameters(a, b)` → Structured list of parameter differences (for future patch diff UI)
 
 ## Usage Patterns
-
-### For Production UI (VCF Controls)
-
-```typescript
-import { parseMonologueSysEx, MonologueVCFParams } from "@/lib/sysex";
-
-const vcfParams = parseMonologueSysEx(sysexData);
-if (vcfParams.isValid && vcfParams.vcf) {
-  console.log(`Cutoff: ${vcfParams.vcf.cutoff}, Resonance: ${vcfParams.vcf.resonance}`);
-}
-```
 
 ### For Comprehensive Parameter Access
 
@@ -98,7 +78,6 @@ src/lib/sysex/
 ├── utilities.ts          # Bit manipulation helpers
 ├── monologue-parser.ts   # MVP parser (VCF + patch names)
 ├── decoder.ts            # Comprehensive parser (full MIDI spec)
-├── parameter-diff.ts     # Parameter diff tool
 └── tests/                # Comprehensive test suites for all components
 ```
 

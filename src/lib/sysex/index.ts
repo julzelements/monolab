@@ -63,7 +63,4 @@ export {
   transformDataFrom8BitTo7Bit,
 } from "./utilities";
 
-// =============================================================================
-// DIFFERENCE & ANALYSIS UTILITIES
-// =============================================================================
-export { diffMonologueParameters, type ParameterDifference } from "./parameter-diff";
+
