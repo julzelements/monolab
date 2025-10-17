@@ -62,5 +62,3 @@ export {
   packLowerBits,
   transformDataFrom8BitTo7Bit,
 } from "./utilities";
-
-
