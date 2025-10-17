@@ -1,6 +1,5 @@
 // MVP MIDI utilities - simplified for cutoff and resonance only
 import { MVPPatch, SimpleMIDIDevice, ParameterChangeEvent, VCF_CC, DeviceSelection } from "@/types/mvp";
-import { parseMonologueSysEx } from "@/lib/sysex";
 import { parameterToMidiCC, midiCCToParameter, parametersToMidiCCs } from "./midi-cc";
 import { MonologueParameters, decodeMonologueParameters } from "@/lib/sysex/decoder";
 
@@ -421,36 +420,6 @@ export class SimpleMIDIManager {
           });
         } else {
           console.error("❌ Failed to decode complete patch:", fullPatch.error);
-        }
-
-        // Legacy: Parse with old VCF-only parser for backward compatibility
-        const legacyParsed = parseMonologueSysEx(data);
-        if (legacyParsed.isValid && legacyParsed.vcf) {
-          console.log("🎛️ Emitting legacy VCF parameter updates from SysEx...");
-
-          // Emit cutoff change
-          this.emit("parameterChange", {
-            parameterId: "cutoff",
-            value: legacyParsed.vcf.cutoff,
-            normalized: legacyParsed.vcf.cutoff / 1023,
-            ccValue: Math.round((legacyParsed.vcf.cutoff / 1023) * 127),
-            source: "sysex",
-            timestamp: Date.now(),
-          });
-
-          // Emit resonance change
-          this.emit("parameterChange", {
-            parameterId: "resonance",
-            value: legacyParsed.vcf.resonance,
-            normalized: legacyParsed.vcf.resonance / 1023,
-            ccValue: Math.round((legacyParsed.vcf.resonance / 1023) * 127),
-            source: "sysex",
-            timestamp: Date.now(),
-          });
-
-          console.log(
-            `✅ Updated VCF: Cutoff=${legacyParsed.vcf.cutoff}/1023, Resonance=${legacyParsed.vcf.resonance}/1023`
-          );
         }
       }
     }

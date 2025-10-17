@@ -5,12 +5,9 @@
  * Extracts full parameter set from 520-byte SysEx data for round-trip encoding capability.
  *
  * Use this decoder when you need:
- * - Complete parameter access beyond VCF controls
  * - Round-trip encoding with encodeMonologueParameters in encoder.ts
  * - Full MIDI spec compliance
- * - Future feature development requiring additional parameters
- *
- * For lightweight VCF-only parsing, see monologue-parser.ts
+
  */
 
 import { addLowerBits, getBits, transformDataFrom7BitTo8Bit } from "./utilities";

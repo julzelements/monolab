@@ -76,7 +76,6 @@ src/lib/sysex/
 ├── README.md             # This documentation
 ├── encoder.ts            # 7↔8 bit transformation + unified round-trip encoder + validation
 ├── utilities.ts          # Bit manipulation helpers
-├── monologue-parser.ts   # MVP parser (VCF + patch names)
 ├── decoder.ts            # Comprehensive parser (full MIDI spec)
 └── tests/                # Comprehensive test suites for all components
 ```
@@ -95,9 +94,8 @@ The dual-parser approach enables:
 - **Future Expansion**: Comprehensive decoder ready for additional features
 - **Perfect Round-Trip**: Foundation for patch editing and saving workflows
 
-Choose the appropriate parser based on your requirements:
+Parser provides comprehensive access to all Monologue parameters with:
 
-- **Light & Fast**: `monologue-parser.ts` for VCF controls
 - **Complete & Future-Ready**: `decoder.ts` for comprehensive access
 
 ## Mapping specs
