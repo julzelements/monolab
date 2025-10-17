@@ -34,6 +34,7 @@ export {
   to7BitMidiValue,
   from7BitMidiValue,
   type MonologueParameters,
+  type UnvalidatedMonologueParameters,
 } from "./decoder";
 
 // =============================================================================

@@ -9,6 +9,7 @@ export const defaultMonologueParameters: MonologueParameters = {
       wave: 0, // SAW
       shape: 0,
       level: 512,
+      octave: 1, // 8'
     },
     vco2: {
       wave: 0, // SAW

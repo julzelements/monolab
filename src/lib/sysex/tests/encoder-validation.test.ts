@@ -1,13 +1,19 @@
 import { describe, it, expect } from "vitest";
 import { validateMonologueParameters, encodeMonologueParameters } from "../encoder";
-import { decodeMonologueParameters } from "../decoder";
+import { decodeMonologueParameters, type MonologueParameters } from "../decoder";
 import fs from "fs";
 import path from "path";
 
 // Load one sample dump for baseline
 const dumpPath = path.join(__dirname, "data", "dumps", "dump1.json");
 const dump = JSON.parse(fs.readFileSync(dumpPath, "utf8"));
-const params = decodeMonologueParameters(dump.rawData);
+const paramsDecoded = decodeMonologueParameters(dump.rawData);
+const params = (() => {
+  if (!paramsDecoded.isValid || paramsDecoded.drive === undefined) {
+    throw new Error("Test data is invalid");
+  }
+  return paramsDecoded as MonologueParameters;
+})();
 
 describe("Encoder validation", () => {
   it("returns valid for complete parameter object", () => {

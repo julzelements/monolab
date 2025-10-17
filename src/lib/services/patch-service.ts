@@ -48,7 +48,13 @@ export class PatchService {
     let parameters: MonologueParameters;
     try {
       const arr: number[] = Array.from(sysex instanceof Uint8Array ? sysex : new Uint8Array(sysex));
-      parameters = decodeMonologueParameters(arr);
+      const decodedParams = decodeMonologueParameters(arr);
+
+      if (!decodedParams.isValid || decodedParams.drive === undefined) {
+        throw new Error(decodedParams.error || "Invalid parameters structure");
+      }
+
+      parameters = decodedParams as MonologueParameters;
     } catch (e: any) {
       throw new Error(`Failed to decode SysEx: ${e?.message || e}`);
     }

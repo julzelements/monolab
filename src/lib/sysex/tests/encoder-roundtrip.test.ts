@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { encodeMonologueParameters } from "../encoder";
-import { decodeMonologueParameters } from "../decoder";
+import { decodeMonologueParameters, type MonologueParameters } from "../decoder";
 
 // Debug logging toggle: set MONOLOGUE_SYSEX_TEST_DEBUG=1 to enable verbose logs
 const DEBUG = process.env.MONOLOGUE_SYSEX_TEST_DEBUG === "1";
@@ -20,16 +20,26 @@ function testRoundTrip(sysExData: number[]): {
 } {
   try {
     // Parse original
-    const original = decodeMonologueParameters(sysExData);
-    debug("Original parsed successfully:", !!original);
+    const originalDecoded = decodeMonologueParameters(sysExData);
+    debug("Original parsed successfully:", !!originalDecoded);
+
+    if (!originalDecoded.isValid || originalDecoded.drive === undefined) {
+      throw new Error(originalDecoded.error || "Invalid original parameters");
+    }
+    const original = originalDecoded as MonologueParameters;
 
     // Encode back
     const encoded = encodeMonologueParameters(original);
     debug("Encoded successfully, size:", encoded.length);
 
     // Parse again
-    const roundTrip = decodeMonologueParameters(encoded);
-    debug("Round-trip parsed successfully:", !!roundTrip);
+    const roundTripDecoded = decodeMonologueParameters(encoded);
+    debug("Round-trip parsed successfully:", !!roundTripDecoded);
+
+    if (!roundTripDecoded.isValid || roundTripDecoded.drive === undefined) {
+      throw new Error(roundTripDecoded.error || "Invalid round-trip parameters");
+    }
+    const roundTrip = roundTripDecoded as MonologueParameters;
 
     // Compare
     const differences: string[] = [];
@@ -112,11 +122,16 @@ describe("Monologue Encoder", () => {
       const dump = JSON.parse(fs.readFileSync(dumpPath, "utf8"));
 
       // Decode original
-      const originalParams = decodeMonologueParameters(dump.rawData);
+      const originalDecoded = decodeMonologueParameters(dump.rawData);
+      expect(originalDecoded.isValid).toBe(true);
+      expect(originalDecoded.drive).toBeDefined();
+      const originalParams = originalDecoded as MonologueParameters;
 
       // Encode and decode again
       const encodedSysex = encodeMonologueParameters(originalParams);
-      const redecodedParams = decodeMonologueParameters(encodedSysex);
+      const redecodedDecoded = decodeMonologueParameters(encodedSysex);
+      expect(redecodedDecoded.isValid).toBe(true);
+      const redecodedParams = redecodedDecoded as MonologueParameters;
 
       // Check specific values we know from our tests
       expect(redecodedParams.patchName).toBe("<afx acid3>");
@@ -151,7 +166,11 @@ describe("Monologue Encoder", () => {
       const dumpPath = path.join(__dirname, "data", "dumps", "dump2.json");
       const dump = JSON.parse(fs.readFileSync(dumpPath, "utf8"));
 
-      const originalParams = decodeMonologueParameters(dump.rawData);
+      const originalDecoded = decodeMonologueParameters(dump.rawData);
+      expect(originalDecoded.isValid).toBe(true);
+      expect(originalDecoded.drive).toBeDefined();
+      const originalParams = originalDecoded as MonologueParameters;
+
       const encodedSysex = encodeMonologueParameters(originalParams);
 
       // Check SysEx structure

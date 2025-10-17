@@ -29,17 +29,19 @@ async function decodePatches(): Promise<DecodedPatch[]> {
     const dump = loadDumpFile(filename);
     const decodedParams = decodeMonologueParameters(dump.rawData);
 
-    if (decodedParams.isValid) {
+    if (decodedParams.isValid && decodedParams.drive !== undefined) {
+      // Type guard: if isValid is true and required fields exist, it's MonologueParameters
+      const validParams = decodedParams as MonologueParameters;
       patches.push({
-        name: decodedParams.patchName || `Patch ${filename.replace(".json", "")}`,
+        name: validParams.patchName || `Patch ${filename.replace(".json", "")}`,
         description: `Decoded patch from ${filename}`,
         tags: ["demo", "test", "decoded"],
-        parameters: decodedParams,
+        parameters: validParams,
         rawData: dump.rawData,
       });
-      console.log(`✅ Successfully decoded ${filename}: ${decodedParams.patchName}`);
+      console.log(`✅ Successfully decoded ${filename}: ${validParams.patchName}`);
     } else {
-      console.error(`❌ Failed to decode ${filename}:`, decodedParams.error);
+      console.error(`❌ Failed to decode ${filename}:`, decodedParams.error || "Invalid parameters");
     }
   }
 

@@ -13,12 +13,12 @@
 import { addLowerBits, getBits, transformDataFrom7BitTo8Bit } from "./utilities";
 
 // Comprehensive parameter interfaces based on monologue.js structure
-export interface MonologueParameters {
-  isValid: boolean;
-  patchName: string;
+export interface UnvalidatedMonologueParameters {
+  isValid?: boolean;
+  patchName?: string;
   error?: string;
 
-  // Complete parameter set (optional for error cases)
+  // Basic parameters
   drive?: number;
   oscillators?: {
     vco1: {
@@ -86,6 +86,89 @@ export interface MonologueParameters {
     decay: number; // 0-127 (AMP EG Decay - CC 17)
   };
   misc?: {
+    bpmSync: boolean; // BPM sync on/off
+    portamentMode: boolean; // Portament mode on/off
+    portamentTime: number; // 0-127
+    cutoffVelocity: number; // 0-3 (0%, 33%, 66%, 100%)
+    cutoffKeyTrack: number; // 0-3 (0%, 33%, 66%, 100%)
+    sliderAssign: string; // Parameter name
+  };
+}
+
+// Strict version with all parameters required (except error which only exists on invalid)
+export interface MonologueParameters {
+  isValid: boolean;
+  patchName: string;
+  error?: string; // Only optional field - only present when isValid is false
+
+  // All parameters are required in strict mode
+  drive: number;
+  oscillators: {
+    vco1: {
+      wave: number; // 0-3 (SAW, TRI, SQR, NOISE)
+      shape: number; // 0-1023
+      level: number; // 0-1023
+      octave: number; // 0-3 (16', 8', 4', 2') - Made required
+    };
+    vco2: {
+      wave: number; // 0-3 (SAW, TRI, SQR, NOISE)
+      shape: number; // 0-1023
+      level: number; // 0-1023
+      pitch: number; // 0-1023
+      sync: number; // 0-3 (OFF, RING, SYNC, RING+SYNC)
+      octave: number; // 0-3 (16', 8', 4', 2')
+    };
+  };
+  filter: {
+    cutoff: number; // 0-1023
+    resonance: number; // 0-1023
+  };
+  envelope: {
+    type: number; // 0-3 (GATE, ADSR, ADS, AR)
+    attack: number; // 0-1023
+    decay: number; // 0-1023
+    intensity: number; // -512 to +511 (0-1023 raw, adjusted)
+    target: number; // 0-3 (PITCH, CUTOFF, AMP, PITCH+CUTOFF)
+  };
+  lfo: {
+    wave: number; // 0-3 (SAW, TRI, SQR, S&H)
+    mode: number; // 0-3 (1-SHOT, SLOW, FAST, 1S+F)
+    rate: number; // 0-1023
+    intensity: number; // -512 to +511 (0-1023 raw, adjusted)
+    target: number; // 0-3 (PITCH, CUTOFF, AMP, PITCH+CUTOFF)
+  };
+  sequencer: {
+    stepLength: number; // 1-16 (active steps)
+    stepResolution: number; // 0-4 (1/16, 1/8, 1/4, 1/2, 1/1)
+    swing: number; // -75 to +75 (timing swing)
+    stepOnOff: boolean[]; // 16 boolean flags for step on/off
+    motionOnOff: boolean[]; // 16 boolean flags for motion sequencing
+  };
+  motionSequencing: {
+    slots: Array<{
+      motionOn: boolean; // Motion On/Off flag
+      smoothOn: boolean; // Smooth On/Off flag
+      parameterId: number; // Which parameter to automate (0=None, 13=VCO1 PITCH, etc.)
+      stepEnabled: boolean[]; // 16 boolean flags for this slot's per-step enable
+    }>;
+    stepEvents: Array<{
+      noteNumber: number; // 0-127 (0 = no event)
+      velocity: number; // 0-127 (0 = no event, 1-127 = velocity)
+      gateTime: number; // 0-127 (0-72 = 0-100%, 73-127 = TIE)
+      triggerSwitch: boolean; // Trigger switch on/off
+      motionData: Array<{
+        data1: number; // Primary motion value (0-255)
+        data2: number; // Secondary value for smooth interpolation (0-255)
+        data3: number; // Additional motion data (0-255)
+        data4: number; // Additional motion data (0-255)
+      }>; // 4 motion slots per step
+    }>; // 16 steps
+  };
+  amp: {
+    attack: number; // 0-127 (AMP EG Attack - CC 16)
+    decay: number; // 0-127 (AMP EG Decay - CC 17)
+  };
+  misc: {
     bpmSync: boolean; // BPM sync on/off
     portamentMode: boolean; // Portament mode on/off
     portamentTime: number; // 0-127
@@ -164,7 +247,9 @@ export function from7BitMidiValue(valueMidi: number): number {
 /**
  * Complete Monologue SysEx decoder based on the working JavaScript implementation
  */
-export function decodeMonologueParameters(rawSysexData: number[]): MonologueParameters {
+export function decodeMonologueParameters(
+  rawSysexData: number[]
+): MonologueParameters | UnvalidatedMonologueParameters {
   try {
     // Validate basic structure
     if (rawSysexData.length !== 520) {
@@ -206,6 +291,7 @@ export function decodeMonologueParameters(rawSysexData: number[]): MonologuePara
       wave: getBits(data[30], 6, 7),
       shape: addLowerBits(data[17], data[30], 2),
       level: addLowerBits(data[20], data[33], 0),
+      octave: getBits(data[30], 4, 5),
     };
 
     // VCO 2 parameters
@@ -491,7 +577,9 @@ export function decodeMonologueParameters(rawSysexData: number[]): MonologuePara
 /**
  * Get VCF parameters in MIDI CC format (0-127) for backward compatibility
  */
-export function getVCFMidiValues(params: MonologueParameters): { cutoff: number; resonance: number } | null {
+export function getVCFMidiValues(
+  params: MonologueParameters | UnvalidatedMonologueParameters
+): { cutoff: number; resonance: number } | null {
   if (!params.isValid || !params.filter) {
     return null;
   }

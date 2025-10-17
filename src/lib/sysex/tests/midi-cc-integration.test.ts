@@ -59,6 +59,7 @@ describe("MIDI CC Integration", () => {
           wave: 1, // TRI
           shape: 128,
           level: 1023,
+          octave: 1, // 8'
         },
         vco2: {
           wave: 2, // SAW

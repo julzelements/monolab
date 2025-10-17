@@ -231,9 +231,9 @@ describe("Monologue Parameter Extraction", () => {
       expect(result2.patchName).toBeDefined();
       expect(result3.patchName).toBeDefined();
 
-      expect(result1.patchName.length).toBeGreaterThan(0);
-      expect(result2.patchName.length).toBeGreaterThan(0);
-      expect(result3.patchName.length).toBeGreaterThan(0);
+      expect(result1.patchName!.length).toBeGreaterThan(0);
+      expect(result2.patchName!.length).toBeGreaterThan(0);
+      expect(result3.patchName!.length).toBeGreaterThan(0);
 
       debug("Extracted patch names:");
       debug("  Dump 1:", result1.patchName);
@@ -278,7 +278,7 @@ describe("Monologue Parameter Extraction", () => {
       expect(result1.patchName).not.toContain("\0");
 
       // Should be trimmed
-      expect(result1.patchName).toBe(result1.patchName.trim());
+      expect(result1.patchName).toBe(result1.patchName!.trim());
     });
   });
 

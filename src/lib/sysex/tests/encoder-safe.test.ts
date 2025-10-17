@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { safeEncodeMonologueParameters, decodeMonologueParameters } from "../index";
+import { safeEncodeMonologueParameters, decodeMonologueParameters, type MonologueParameters } from "../index";
 import fs from "fs";
 import path from "path";
 
@@ -7,7 +7,11 @@ describe("safeEncodeMonologueParameters", () => {
   it("returns ok=true for valid parameter set", () => {
     const dumpPath = path.join(__dirname, "data", "dumps", "dump3.json");
     const dump = JSON.parse(fs.readFileSync(dumpPath, "utf8"));
-    const params = decodeMonologueParameters(dump.rawData);
+    const paramsDecoded = decodeMonologueParameters(dump.rawData);
+    expect(paramsDecoded.isValid).toBe(true);
+    expect(paramsDecoded.drive).toBeDefined();
+    const params = paramsDecoded as MonologueParameters;
+
     const result = safeEncodeMonologueParameters(params);
     expect(result.ok).toBe(true);
     if (result.ok) {

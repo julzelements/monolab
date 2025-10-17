@@ -1,5 +1,5 @@
 // Auto-generated patch data from SysEx dumps
-// Generated on: 2025-10-17T03:33:16.468Z
+// Generated on: 2025-10-17T04:27:31.164Z
 // Do not edit manually - run 'npm run db:seed-generate' to regenerate
 
 import { MonologueParameters } from "@/lib/sysex";
@@ -29,7 +29,8 @@ export const patches: DecodedPatch[] = [
         "vco1": {
           "wave": 2,
           "shape": 0,
-          "level": 1023
+          "level": 1023,
+          "octave": 1
         },
         "vco2": {
           "wave": 2,
@@ -1261,7 +1262,8 @@ export const patches: DecodedPatch[] = [
         "vco1": {
           "wave": 2,
           "shape": 0,
-          "level": 573
+          "level": 573,
+          "octave": 1
         },
         "vco2": {
           "wave": 1,
@@ -2493,7 +2495,8 @@ export const patches: DecodedPatch[] = [
         "vco1": {
           "wave": 1,
           "shape": 0,
-          "level": 1023
+          "level": 1023,
+          "octave": 1
         },
         "vco2": {
           "wave": 2,
@@ -3725,7 +3728,8 @@ export const patches: DecodedPatch[] = [
         "vco1": {
           "wave": 0,
           "shape": 0,
-          "level": 1023
+          "level": 1023,
+          "octave": 1
         },
         "vco2": {
           "wave": 1,
@@ -4957,7 +4961,8 @@ export const patches: DecodedPatch[] = [
         "vco1": {
           "wave": 1,
           "shape": 0,
-          "level": 1023
+          "level": 1023,
+          "octave": 1
         },
         "vco2": {
           "wave": 2,
