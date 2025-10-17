@@ -201,20 +201,3 @@ export interface PaginatedResponse<T> {
   hasNext: boolean;
   hasPrev: boolean;
 }
-
-// Sharing types
-export interface SharedPatch {
-  token: string;
-  patch: MonologuePatch;
-  metadata: {
-    name: string;
-    author?: string;
-    createdAt: Date;
-  };
-}
-
-export interface UrlEncodedPatch {
-  v: number; // version
-  p: string; // compressed patch data
-  m?: string; // metadata
-}
