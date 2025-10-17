@@ -19,6 +19,7 @@
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed-generate": "tsx prisma/seed/decode-patches.ts",
     "docker:dev": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "test:sysex": "tsx src/lib/sysex/test-runner.ts"
