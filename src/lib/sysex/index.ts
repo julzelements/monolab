@@ -37,13 +37,6 @@ export {
 } from "./decoder";
 
 // =============================================================================
-// MVP PARAMETER EXTRACTION (Production UI)
-// =============================================================================
-// Focused implementation for VCF controls + patch names (cutoff, resonance)
-// Use for: Current UI components, lightweight parsing, production MVP
-export { parseMonologueSysEx, type MonologueVCFParams } from "./monologue-parser";
-
-// =============================================================================
 // ROUND-TRIP ENCODING (Unified)
 // =============================================================================
 // Perfect round-trip encoder (decode -> encode -> decode equality) consolidated into encoder.ts
