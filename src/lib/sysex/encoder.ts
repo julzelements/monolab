@@ -228,6 +228,8 @@ export interface EncodeValidationResult {
   error?: string;
 }
 
+// TODO: add proper json schema validation
+
 export function validateMonologueParameters(params: MonologueParameters): EncodeValidationResult {
   const missing: string[] = [];
   if (!params.isValid) missing.push("isValid=false");
