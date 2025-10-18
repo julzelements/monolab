@@ -41,23 +41,23 @@ const Panel = ({
         <div className="panel">
           <div className="panel-controls">
             <Master
-              drive={getParameterValue(parameters, "drive")}
-              octave={0} // VCO1 octave - placeholder for future implementation
+              drive={parameters.drive}
+              octave={parameters.oscillators.vco1.octave} // VCO1 octave - placeholder for future implementation
               onChangeDrive={createParameterCallback("drive")}
-              onChangeOctave={() => {}} // VCO1 octave - placeholder for future implementation
+              onChangeOctave={createParameterCallback("oscillators.vco1.octave")} // VCO1 octave - placeholder for future implementation
             />
             <VCO1
-              shape={getParameterValue(parameters, "oscillators.vco1.shape")}
-              wave={getParameterValue(parameters, "oscillators.vco1.wave")}
+              shape={parameters.oscillators.vco1.shape}
+              wave={parameters.oscillators.vco1.wave}
               onChangeWave={createParameterCallback("oscillators.vco1.wave")}
               onChangeShape={createParameterCallback("oscillators.vco1.shape")}
             />
             <VCO2
-              octave={getParameterValue(parameters, "oscillators.vco2.octave")}
-              pitch={getParameterValue(parameters, "oscillators.vco2.pitch")}
-              wave={getParameterValue(parameters, "oscillators.vco2.wave")}
-              duty={getParameterValue(parameters, "oscillators.vco2.sync")}
-              shape={getParameterValue(parameters, "oscillators.vco2.shape")}
+              octave={parameters.oscillators.vco2.octave}
+              pitch={parameters.oscillators.vco2.pitch}
+              wave={parameters.oscillators.vco2.wave}
+              duty={parameters.oscillators.vco2.sync}
+              shape={parameters.oscillators.vco2.shape}
               onChangeOctave={createParameterCallback("oscillators.vco2.octave")}
               onChangeWave={createParameterCallback("oscillators.vco2.wave")}
               onChangeDuty={createParameterCallback("oscillators.vco2.sync")}
@@ -65,24 +65,24 @@ const Panel = ({
               onChangeShape={createParameterCallback("oscillators.vco2.shape")}
             />
             <Mixer
-              vco1Level={getParameterValue(parameters, "oscillators.vco1.level")}
-              vco2Level={getParameterValue(parameters, "oscillators.vco2.level")}
+              vco1Level={parameters.oscillators.vco1.level}
+              vco2Level={parameters.oscillators.vco2.level}
               onChangeVCO1LevelValue={createParameterCallback("oscillators.vco1.level")}
               onChangeVCO2LevelValue={createParameterCallback("oscillators.vco2.level")}
             />
             <Filter
-              cutoff={getParameterValue(parameters, "filter.cutoff")}
-              resonance={getParameterValue(parameters, "filter.resonance")}
+              cutoff={parameters.filter.cutoff}
+              resonance={parameters.filter.resonance}
               onChangeCutoff={createParameterCallback("filter.cutoff")}
               onChangeResonance={createParameterCallback("filter.resonance")}
             />
             <div className="panel-section" id="eglfo">
               <Envelope
-                type={getParameterValue(parameters, "envelope.type")}
-                attack={getParameterValue(parameters, "envelope.attack")}
-                decay={getParameterValue(parameters, "envelope.decay")}
-                intensity={getParameterValue(parameters, "envelope.intensity")}
-                target={getParameterValue(parameters, "envelope.target")}
+                type={parameters.envelope.type}
+                attack={parameters.envelope.attack}
+                decay={parameters.envelope.decay}
+                intensity={parameters.envelope.intensity}
+                target={parameters.envelope.target}
                 onChangeType={createParameterCallback("envelope.type")}
                 onChangeAttack={createParameterCallback("envelope.attack")}
                 onChangeDecay={createParameterCallback("envelope.decay")}
@@ -91,11 +91,11 @@ const Panel = ({
                 onIntensityInvertChange={createInvertCallback("envelope.intensity")}
               />
               <LFO
-                wave={getParameterValue(parameters, "lfo.wave")}
-                mode={getParameterValue(parameters, "lfo.mode")}
-                rate={getParameterValue(parameters, "lfo.rate")}
-                intensity={getParameterValue(parameters, "lfo.intensity")}
-                target={getParameterValue(parameters, "lfo.target")}
+                wave={parameters.lfo.wave}
+                mode={parameters.lfo.mode}
+                rate={parameters.lfo.rate}
+                intensity={parameters.lfo.intensity}
+                target={parameters.lfo.target}
                 onChangeWave={createParameterCallback("lfo.wave")}
                 onChangeMode={createParameterCallback("lfo.mode")}
                 onChangeRate={createParameterCallback("lfo.rate")}
