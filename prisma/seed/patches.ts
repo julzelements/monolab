@@ -1,5 +1,5 @@
 // Auto-generated patch data from SysEx dumps
-// Generated on: 2025-10-17T04:27:31.164Z
+// Generated on: 2025-10-18T06:07:00.849Z
 // Do not edit manually - run 'npm run db:seed-generate' to regenerate
 
 import { MonologueParameters } from "@/lib/sysex";
@@ -28,6 +28,7 @@ export const patches: DecodedPatch[] = [
       "oscillators": {
         "vco1": {
           "wave": 2,
+          "pitch": 512,
           "shape": 0,
           "level": 1023,
           "octave": 1
@@ -1261,6 +1262,7 @@ export const patches: DecodedPatch[] = [
       "oscillators": {
         "vco1": {
           "wave": 2,
+          "pitch": 512,
           "shape": 0,
           "level": 573,
           "octave": 1
@@ -2494,6 +2496,7 @@ export const patches: DecodedPatch[] = [
       "oscillators": {
         "vco1": {
           "wave": 1,
+          "pitch": 512,
           "shape": 0,
           "level": 1023,
           "octave": 1
@@ -3727,6 +3730,7 @@ export const patches: DecodedPatch[] = [
       "oscillators": {
         "vco1": {
           "wave": 0,
+          "pitch": 512,
           "shape": 0,
           "level": 1023,
           "octave": 1
@@ -4960,6 +4964,7 @@ export const patches: DecodedPatch[] = [
       "oscillators": {
         "vco1": {
           "wave": 1,
+          "pitch": 512,
           "shape": 0,
           "level": 1023,
           "octave": 1
