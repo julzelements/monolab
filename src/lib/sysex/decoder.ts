@@ -23,6 +23,7 @@ export interface UnvalidatedMonologueParameters {
   oscillators?: {
     vco1: {
       wave: number; // 0-3 (SAW, TRI, SQR, NOISE)
+      pitch: number; // 0-1023
       shape: number; // 0-1023
       level: number; // 0-1023
       octave?: number; // 0-3 (16', 8', 4', 2') - MIDI CC only parameter
@@ -106,6 +107,7 @@ export interface MonologueParameters {
   oscillators: {
     vco1: {
       wave: number; // 0-3 (SAW, TRI, SQR, NOISE)
+      pitch: number; // 0-1023
       shape: number; // 0-1023
       level: number; // 0-1023
       octave: number; // 0-3 (16', 8', 4', 2') - Made required
@@ -289,6 +291,7 @@ export function decodeMonologueParameters(
     // VCO 1 parameters
     const vco1 = {
       wave: getBits(data[30], 6, 7),
+      pitch: addLowerBits(data[16], data[30], 0),
       shape: addLowerBits(data[17], data[30], 2),
       level: addLowerBits(data[20], data[33], 0),
       octave: getBits(data[30], 4, 5),

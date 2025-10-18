@@ -57,6 +57,7 @@ describe("MIDI CC Integration", () => {
       oscillators: {
         vco1: {
           wave: 1, // TRI
+          pitch: 512, // Center pitch
           shape: 128,
           level: 1023,
           octave: 1, // 8'

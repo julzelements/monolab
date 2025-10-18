@@ -21,8 +21,10 @@ describe("Monologue Parameter Extraction", () => {
       expect(result.isValid).toBe(true);
 
       expect(typeof result.oscillators?.vco1?.wave).toBe("number");
+      expect(typeof result.oscillators?.vco1?.pitch).toBe("number");
       expect(typeof result.oscillators?.vco1?.shape).toBe("number");
       expect(typeof result.oscillators?.vco1?.level).toBe("number");
+      expect(typeof result.oscillators?.vco1?.octave).toBe("number");
 
       // Wave should be 0-3 (SAW, TRI, SQR, NOISE)
       if (result.oscillators?.vco1?.wave !== undefined) {
@@ -30,7 +32,12 @@ describe("Monologue Parameter Extraction", () => {
         expect(result.oscillators.vco1.wave).toBeLessThanOrEqual(3);
       }
 
-      // Shape and level should be 0-1023
+      // Pitch, shape and level should be 0-1023
+      if (result.oscillators?.vco1?.pitch !== undefined) {
+        expect(result.oscillators.vco1.pitch).toBeGreaterThanOrEqual(0);
+        expect(result.oscillators.vco1.pitch).toBeLessThanOrEqual(1023);
+      }
+
       if (result.oscillators?.vco1?.shape !== undefined) {
         expect(result.oscillators.vco1.shape).toBeGreaterThanOrEqual(0);
         expect(result.oscillators.vco1.shape).toBeLessThanOrEqual(1023);
@@ -39,6 +46,12 @@ describe("Monologue Parameter Extraction", () => {
       if (result.oscillators?.vco1?.level !== undefined) {
         expect(result.oscillators.vco1.level).toBeGreaterThanOrEqual(0);
         expect(result.oscillators.vco1.level).toBeLessThanOrEqual(1023);
+      }
+
+      // Octave should be 0-3 (32', 16', 8', 4', 2')
+      if (result.oscillators?.vco1?.octave !== undefined) {
+        expect(result.oscillators.vco1.octave).toBeGreaterThanOrEqual(0);
+        expect(result.oscillators.vco1.octave).toBeLessThanOrEqual(4);
       }
     });
 

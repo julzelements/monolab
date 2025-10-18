@@ -7,6 +7,7 @@ export const defaultMonologueParameters: MonologueParameters = {
   oscillators: {
     vco1: {
       wave: 0, // SAW
+      pitch: 512, // Center pitch
       shape: 0,
       level: 512,
       octave: 1, // 8'

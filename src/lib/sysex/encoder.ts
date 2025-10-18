@@ -262,10 +262,13 @@ export function encodeMonologueParameters(params: MonologueParameters): number[]
   for (let i = 0; i < 12; i++) data[4 + i] = patchName.charCodeAt(i);
 
   // VCO1
+  data[16] = getHighBits(oscillators!.vco1.pitch);
   data[17] = getHighBits(oscillators!.vco1.shape);
   data[20] = getHighBits(oscillators!.vco1.level);
   data[30] = setBits(data[30], oscillators!.vco1.wave, 6, 7);
+  data[30] = setBits(data[30], oscillators!.vco1.octave, 4, 5);
   data[30] = packLowerBits(data[30], oscillators!.vco1.shape, 2);
+  data[30] = packLowerBits(data[30], oscillators!.vco1.pitch, 0);
   // VCO2
   data[18] = getHighBits(oscillators!.vco2.pitch);
   data[19] = getHighBits(oscillators!.vco2.shape);
@@ -342,9 +345,6 @@ export function encodeMonologueParameters(params: MonologueParameters): number[]
       data[mo + 3] = md.data4;
     }
   }
-  // AMP
-  data[16] = amp!.attack;
-  data[17] = amp!.decay; // (Potential overlap with earlier indices retained from original logic)
   // Misc
   data[41] = misc!.portamentTime;
   data[42] = SLIDER_ASSIGN_REVERSE_MATRIX[misc!.sliderAssign] || 23;
